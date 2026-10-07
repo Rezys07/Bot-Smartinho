@@ -21,6 +21,17 @@ interface ServiceAccountKey {
   private_key: string;
 }
 
+function resolveKey(env: SheetsEnv): ServiceAccountKey {
+  if (env.GOOGLE_SERVICE_ACCOUNT_EMAIL && env.GOOGLE_PRIVATE_KEY) {
+    return {
+      client_email: env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      // No .env a chave costuma vir com "\n" literais.
+      private_key: env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+    };
+  }
+  return decodeKey(env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64 ?? "");
+}
+
 function decodeKey(b64: string): ServiceAccountKey {
   let parsed: unknown;
   try {
@@ -41,7 +52,7 @@ export class GoogleSheetSource implements SheetSource {
   readonly serviceAccountEmail: string;
 
   constructor(private readonly env: SheetsEnv) {
-    const key = decodeKey(env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64);
+    const key = resolveKey(env);
     this.serviceAccountEmail = key.client_email;
     this.jwt = new JWT({
       email: key.client_email,

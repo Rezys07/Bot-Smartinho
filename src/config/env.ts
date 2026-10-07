@@ -10,12 +10,30 @@ const optionalId = z
 const intWithDefault = (def: number, min = 1) =>
   z.coerce.number().int().min(min).default(def);
 
-const sheetsSchema = z.object({
-  GOOGLE_SHEET_ID: z.string().trim().min(1, "obrigatório"),
-  GOOGLE_SHEET_RANGE: z.string().trim().min(1).default("Respostas ao formulário 1"),
-  GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: z.string().trim().min(1, "obrigatório"),
-  SHEETS_REFRESH_MINUTES: intWithDefault(5),
-});
+const emptyToUndefined = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v ? v : undefined));
+
+const sheetsSchema = z
+  .object({
+    GOOGLE_SHEET_ID: z.string().trim().min(1, "obrigatório"),
+    GOOGLE_SHEET_RANGE: z.string().trim().min(1).default("Página1"),
+    // Opção A: e-mail + chave privada (com \n literais, como vem no JSON)
+    GOOGLE_SERVICE_ACCOUNT_EMAIL: emptyToUndefined,
+    GOOGLE_PRIVATE_KEY: emptyToUndefined,
+    // Opção B: JSON inteiro da chave em base64
+    GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: emptyToUndefined,
+    SHEETS_REFRESH_MINUTES: intWithDefault(5),
+  })
+  .refine(
+    (e) => e.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64 || (e.GOOGLE_SERVICE_ACCOUNT_EMAIL && e.GOOGLE_PRIVATE_KEY),
+    {
+      message: "defina GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_PRIVATE_KEY, ou GOOGLE_SERVICE_ACCOUNT_JSON_BASE64",
+      path: ["GOOGLE_PRIVATE_KEY"],
+    },
+  );
 
 const botSchema = z.object({
   DISCORD_TOKEN: z.string().trim().min(1, "obrigatório"),
