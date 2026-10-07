@@ -8,6 +8,7 @@
     "dev": "bun --watch run src/index.ts",
     "setup": "bun run src/scripts/setup.ts",
     "sheets:check": "bun run src/scripts/sheets-check.ts",
+    "discord:check": "bun run src/scripts/discord-check.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
