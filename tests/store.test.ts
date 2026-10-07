@@ -6,6 +6,7 @@ import { withRetry } from "../src/util/retry";
 import { buildFixture } from "./fixtures/inscricoes";
 
 const silent = pino({ level: "silent" });
+const opts = { maxTeamSize: 5, refreshMinutes: 5, logger: silent };
 
 class FakeSource implements SheetSource {
   calls = 0;
@@ -18,21 +19,23 @@ class FakeSource implements SheetSource {
 
 describe("InscricoesStore", () => {
   test("carrega e busca por e-mail normalizado", async () => {
-    const store = new InscricoesStore(new FakeSource(buildFixture), { maxTeamSize: 5, refreshMinutes: 5, logger: silent });
-    const r = await store.refresh();
-    expect(r.ok).toBe(true);
-    expect(store.findByEmail("  PESSOA1@Exemplo.Test ")?.nome).toBe("Ana Beatriz Lima");
-    expect(store.declaredGroupOf("pessoa3@exemplo.test")?.members).toHaveLength(3);
+    const store = new InscricoesStore(new FakeSource(buildFixture), opts);
+    expect((await store.refresh()).ok).toBe(true);
+    const ana = store.findByEmail("  PESSOA1@Exemplo.Test ");
+    expect(ana?.nome).toBe("Ana Beatriz Lima");
+    expect(store.declaredTeam(ana!.equipeKey)?.members).toHaveLength(3);
     expect(store.findByEmail("naoexiste@exemplo.test")).toBeUndefined();
   });
 
   test("falha da API mantém o cache anterior", async () => {
     let fail = false;
-    const src = new FakeSource(() => {
-      if (fail) throw new Error("503");
-      return buildFixture();
-    });
-    const store = new InscricoesStore(src, { maxTeamSize: 5, refreshMinutes: 5, logger: silent });
+    const store = new InscricoesStore(
+      new FakeSource(() => {
+        if (fail) throw new Error("503");
+        return buildFixture();
+      }),
+      opts,
+    );
     await store.refresh();
     fail = true;
     const r = await store.refresh();
@@ -43,11 +46,7 @@ describe("InscricoesStore", () => {
 
   test("planilha vazia não apaga o cache", async () => {
     let empty = false;
-    const store = new InscricoesStore(new FakeSource(() => (empty ? [] : buildFixture())), {
-      maxTeamSize: 5,
-      refreshMinutes: 5,
-      logger: silent,
-    });
+    const store = new InscricoesStore(new FakeSource(() => (empty ? [] : buildFixture())), opts);
     await store.refresh();
     empty = true;
     expect((await store.refresh()).ok).toBe(false);
@@ -56,7 +55,7 @@ describe("InscricoesStore", () => {
 
   test("refresh simultâneos fazem uma só leitura", async () => {
     const src = new FakeSource(buildFixture);
-    const store = new InscricoesStore(src, { maxTeamSize: 5, refreshMinutes: 5, logger: silent });
+    const store = new InscricoesStore(src, opts);
     await Promise.all([store.refresh(), store.refresh(), store.refresh()]);
     expect(src.calls).toBe(1);
   });

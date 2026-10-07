@@ -1,13 +1,11 @@
 import type { Logger } from "../logger";
-import { buildDeclaredGroups, type DeclaredGroup, type GroupingResult } from "../teams/grouping";
 import { normalizeEmail } from "../teams/normalize";
 import type { SheetSource } from "./client";
 import { parseSheet } from "./parse";
-import type { Inscricao, ParsedSheet } from "./types";
+import type { DeclaredTeam, Inscricao, ParsedSheet } from "./types";
 
 export interface Snapshot {
   sheet: ParsedSheet;
-  grouping: GroupingResult;
   loadedAt: Date;
 }
 
@@ -44,22 +42,16 @@ export class InscricoesStore {
     const log = this.opts.logger;
     try {
       const values = await this.source.fetchValues();
-      const sheet = parseSheet(values);
+      const sheet = parseSheet(values, { maxTeamSize: this.opts.maxTeamSize });
       if (sheet.all.length === 0 && this.current && this.current.sheet.all.length > 0) {
         // Proteção: planilha veio vazia/sem colunas — provavelmente erro de acesso ou de intervalo.
         throw new Error(
           `planilha retornou 0 inscrições válidas (${sheet.issues.map((i) => i.message).join("; ") || "sem detalhes"})`,
         );
       }
-      const grouping = buildDeclaredGroups(sheet.all, { maxSize: this.opts.maxTeamSize });
-      this.current = { sheet, grouping, loadedAt: new Date() };
+      this.current = { sheet, loadedAt: new Date() };
       log.info(
-        {
-          inscricoes: sheet.all.length,
-          grupos: grouping.groups.length,
-          problemasPlanilha: sheet.issues.length,
-          problemasAgrupamento: grouping.issues.length,
-        },
+        { inscricoes: sheet.all.length, equipes: sheet.teams.size, problemas: sheet.issues.length },
         "sheets: cache atualizado",
       );
       return { ok: true, snapshot: this.current };
@@ -84,7 +76,7 @@ export class InscricoesStore {
     return this.current?.sheet.byEmail.get(normalizeEmail(rawEmail));
   }
 
-  declaredGroupOf(email: string): DeclaredGroup | undefined {
-    return this.current?.grouping.byEmail.get(normalizeEmail(email));
+  declaredTeam(key: string | null): DeclaredTeam | undefined {
+    return key ? this.current?.sheet.teams.get(key) : undefined;
   }
 }

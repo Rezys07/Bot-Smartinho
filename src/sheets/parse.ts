@@ -1,41 +1,25 @@
 import { isValidEmail, normalizeEmail, normalizeName } from "../teams/normalize";
-import type { Inscricao, ParsedSheet, ParticipationMode, SheetIssue } from "./types";
+import type { DeclaredTeam, Inscricao, ParsedSheet, SheetIssue } from "./types";
 
-type Field =
-  | "email"
-  | "nome"
-  | "telefone"
-  | "instituicao"
-  | "curso"
-  | "areas"
-  | "modo"
-  | "integrantesQtd"
-  | "integrantes";
+type Field = "email" | "nome" | "equipe";
 
-/** Trechos (normalizados) que identificam cada coluna pelo título — ordem das colunas não importa. */
+/** Trechos (normalizados) que identificam cada coluna pelo título — a ordem das colunas não importa. */
 const HEADER_MATCHERS: Record<Field, string[]> = {
   email: ["endereco de e mail", "e mail", "email"],
-  nome: ["nome completo"],
-  telefone: ["telefone", "whatsapp"],
-  instituicao: ["instituicao"],
-  curso: ["curso"],
-  areas: ["areas de interesse"],
-  modo: ["como voce deseja participar"],
-  integrantesQtd: ["quantos integrantes"],
-  integrantes: ["nome dos integrantes"],
+  nome: ["nome completo", "nome"],
+  equipe: ["equipe", "time"],
 };
 
-const REQUIRED: Field[] = ["email", "nome", "modo"];
+const REQUIRED: Field[] = ["email", "nome"];
 
 export function mapHeaders(header: string[]): { cols: Partial<Record<Field, number>>; missing: Field[] } {
   const norm = header.map((h) => normalizeName(h ?? ""));
   const cols: Partial<Record<Field, number>> = {};
   const used = new Set<number>();
-  // Campos mais específicos primeiro, para "nome dos integrantes" não virar "nome".
-  const order: Field[] = ["integrantes", "integrantesQtd", "modo", "areas", "nome", "email", "telefone", "instituicao", "curso"];
-  for (const field of order) {
+  // "equipe" antes de "nome" para "Nome da equipe" não virar a coluna de nome.
+  for (const field of ["email", "equipe", "nome"] as Field[]) {
     for (const needle of HEADER_MATCHERS[field]) {
-      const idx = norm.findIndex((h, i) => !used.has(i) && h.includes(needle));
+      const idx = norm.findIndex((h, i) => !used.has(i) && (h === needle || h.includes(needle)));
       if (idx >= 0) {
         cols[field] = idx;
         used.add(idx);
@@ -47,41 +31,37 @@ export function mapHeaders(header: string[]): { cols: Partial<Record<Field, numb
   return { cols, missing };
 }
 
-export function parseMode(raw: string): ParticipationMode | null {
-  const s = normalizeName(raw);
-  if (!s) return null;
-  if (s.includes("individualmente") || s.includes("ser alocad")) return 1;
-  if (s.includes("alguns integrantes") || s.includes("completar")) return 3;
-  if (s.includes("equipe formada")) return 2;
-  return null;
+const NO_TEAM = new Set(["", "sem equipe", "individual", "nenhuma", "nenhum", "nao", "x", "na", "n a"]);
+
+/**
+ * Normaliza o valor da coluna Equipe para comparar linhas:
+ * "Equipe 07", "equipe-7", "7" → "7"; "Os Urbanistas" → "os urbanistas".
+ */
+export function teamKey(raw: string | null | undefined): string | null {
+  const norm = normalizeName(raw ?? "");
+  if (NO_TEAM.has(norm)) return null;
+  const stripped = norm.replace(/^(equipe|time|grupo|team)\s+/, "").trim();
+  if (/^\d+$/.test(stripped)) return String(Number(stripped));
+  return stripped || null;
 }
 
-export function splitAreas(raw: string): string[] {
-  return raw
-    .split(/[,;\n]/)
-    .map((a) => a.trim())
-    .filter(Boolean);
-}
-
-/** Converte a matriz da planilha (com cabeçalho na 1ª linha) em inscrições indexadas. */
-export function parseSheet(values: unknown[][]): ParsedSheet {
+export function parseSheet(values: unknown[][], opts: { maxTeamSize: number }): ParsedSheet {
   const issues: SheetIssue[] = [];
   const byEmail = new Map<string, Inscricao>();
-  const all: Inscricao[] = [];
+  const teams = new Map<string, DeclaredTeam>();
   if (values.length === 0) {
     issues.push({ kind: "missing_column", message: "Planilha vazia (sem cabeçalho)." });
-    return { byEmail, all, issues };
+    return { byEmail, all: [], teams, issues };
   }
 
-  const header = (values[0] ?? []).map((v) => String(v ?? ""));
-  const { cols, missing } = mapHeaders(header);
+  const { cols, missing } = mapHeaders((values[0] ?? []).map((v) => String(v ?? "")));
   for (const f of missing) {
     issues.push({
       kind: "missing_column",
-      message: `Coluna não encontrada: ${f}${REQUIRED.includes(f) ? " (obrigatória)" : ""}`,
+      message: `Coluna não encontrada: ${f}${REQUIRED.includes(f) ? " (obrigatória)" : " (todos serão tratados como individuais)"}`,
     });
   }
-  if (REQUIRED.some((f) => missing.includes(f))) return { byEmail, all, issues };
+  if (REQUIRED.some((f) => missing.includes(f))) return { byEmail, all: [], teams, issues };
 
   const cell = (r: unknown[], f: Field) => {
     const i = cols[f];
@@ -99,40 +79,43 @@ export function parseSheet(values: unknown[][]): ParsedSheet {
       continue;
     }
     const nome = cell(r, "nome").replace(/\s+/g, " ");
-    if (!nome) {
-      issues.push({ kind: "missing_name", row: rowNumber, message: `Linha ${rowNumber}: nome vazio.` });
-    }
-    const modoRaw = cell(r, "modo");
-    const modo = parseMode(modoRaw);
-    if (modo === null) {
-      issues.push({ kind: "unknown_mode", row: rowNumber, message: `Linha ${rowNumber}: opção de participação não reconhecida.` });
-    }
+    if (!nome) issues.push({ kind: "missing_name", row: rowNumber, message: `Linha ${rowNumber}: nome vazio.` });
 
+    const equipeRaw = cell(r, "equipe");
     const insc: Inscricao = {
       row: rowNumber,
       email,
       nome,
-      telefone: cell(r, "telefone"),
-      instituicao: cell(r, "instituicao"),
-      curso: cell(r, "curso"),
-      areas: splitAreas(cell(r, "areas")),
-      modo,
-      integrantesQtdRaw: cell(r, "integrantesQtd"),
-      integrantesRaw: cell(r, "integrantes"),
+      equipe: equipeRaw || null,
+      equipeKey: teamKey(equipeRaw),
     };
 
     const previous = byEmail.get(email);
     if (previous) {
-      // As respostas do Forms entram em ordem cronológica: a última vale.
       issues.push({
         kind: "duplicate_email",
         row: rowNumber,
-        message: `Linhas ${previous.row} e ${rowNumber}: mesma inscrição enviada mais de uma vez; vale a linha ${rowNumber}.`,
+        message: `Linhas ${previous.row} e ${rowNumber}: mesmo e-mail repetido; vale a linha ${rowNumber}.`,
       });
-      all.splice(all.indexOf(previous), 1);
     }
     byEmail.set(email, insc);
-    all.push(insc);
   }
-  return { byEmail, all, issues };
+
+  const all = [...byEmail.values()].sort((a, b) => a.row - b.row);
+  for (const insc of all) {
+    if (!insc.equipeKey) continue;
+    const t = teams.get(insc.equipeKey) ?? { key: insc.equipeKey, label: insc.equipe!, members: [] };
+    t.members.push(insc);
+    teams.set(insc.equipeKey, t);
+  }
+  for (const t of teams.values()) {
+    if (t.members.length > opts.maxTeamSize) {
+      issues.push({
+        kind: "oversize_team",
+        row: t.members[0]!.row,
+        message: `Equipe "${t.label}" tem ${t.members.length} pessoas na planilha (limite ${opts.maxTeamSize}). Todas serão aceitas no check-in.`,
+      });
+    }
+  }
+  return { byEmail, all, teams, issues };
 }

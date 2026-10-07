@@ -12,6 +12,14 @@ export class SheetsHttpError extends Error {
   }
 }
 
+/** Só vale repetir limite de uso, erro do servidor ou falha de rede — não credencial inválida. */
+export function isTransient(err: unknown): boolean {
+  if (err instanceof SheetsHttpError) return err.status === 429 || err.status >= 500;
+  const e = err as { name?: string; code?: string; message?: string };
+  if (e?.name === "TypeError" || e?.name === "TimeoutError" || e?.name === "AbortError") return true;
+  return /ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|socket hang up|fetch failed/i.test(`${e?.code ?? ""} ${e?.message ?? ""}`);
+}
+
 export interface SheetSource {
   fetchValues(): Promise<unknown[][]>;
 }
@@ -83,8 +91,7 @@ export class GoogleSheetSource implements SheetSource {
       },
       {
         retries: 4,
-        shouldRetry: (err) =>
-          !(err instanceof SheetsHttpError) || err.status === 429 || err.status >= 500,
+        shouldRetry: isTransient,
         onRetry: (err, attempt, delayMs) =>
           logger.warn({ attempt, delayMs, err: String(err) }, "sheets: falha ao ler, tentando novamente"),
       },

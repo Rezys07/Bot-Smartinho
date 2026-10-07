@@ -1,48 +1,65 @@
 import { describe, expect, test } from "bun:test";
-import { mapHeaders, parseMode, parseSheet } from "../src/sheets/parse";
-import { buildFixture, HEADER, MODO1, MODO2, MODO3 } from "./fixtures/inscricoes";
+import { mapHeaders, parseSheet, teamKey } from "../src/sheets/parse";
+import { buildFixture, HEADER } from "./fixtures/inscricoes";
 
 describe("mapHeaders", () => {
-  test("encontra todas as colunas do formulário", () => {
-    const { cols, missing } = mapHeaders(HEADER);
-    expect(missing).toEqual([]);
-    expect(cols.email).toBe(1);
-    expect(cols.nome).toBe(2);
-    expect(cols.integrantes).toBe(9);
-    expect(cols.integrantesQtd).toBe(8);
+  test("encontra as colunas", () => {
+    expect(mapHeaders(HEADER)).toEqual({ cols: { email: 1, equipe: 2, nome: 0 }, missing: [] });
   });
-  test("independe da ordem das colunas", () => {
-    const shuffled = [...HEADER].reverse();
-    const { cols } = mapHeaders(shuffled);
-    expect(shuffled[cols.nome!]).toBe("Nome Completo");
-    expect(shuffled[cols.integrantes!]).toBe("Nome dos integrantes da equipe");
+  test("independe da ordem e aceita variações de título", () => {
+    const { cols, missing } = mapHeaders(["Nome da equipe", "Endereço de e-mail", "Nome Completo"]);
+    expect(missing).toEqual([]);
+    expect(cols).toEqual({ equipe: 0, email: 1, nome: 2 });
   });
 });
 
-describe("parseMode", () => {
-  test("três opções do formulário", () => {
-    expect(parseMode(MODO1)).toBe(1);
-    expect(parseMode(MODO2)).toBe(2);
-    expect(parseMode(MODO3)).toBe(3);
-    expect(parseMode("outra coisa")).toBeNull();
+describe("teamKey", () => {
+  test("variações do mesmo número", () => {
+    for (const v of ["Equipe 07", "7", "equipe-7", " EQUIPE 007 ", "Time 7"]) expect(teamKey(v)).toBe("7");
+  });
+  test("nomes livres", () => {
+    expect(teamKey("Os Urbanistas")).toBe("os urbanistas");
+    expect(teamKey("os  urbanistas!")).toBe("os urbanistas");
+  });
+  test("vazio = individual", () => {
+    for (const v of ["", "  ", "Sem equipe", "individual", "-", null, undefined]) expect(teamKey(v)).toBeNull();
   });
 });
 
 describe("parseSheet", () => {
-  const parsed = parseSheet(buildFixture());
+  const parsed = parseSheet(buildFixture(), { maxTeamSize: 5 });
 
   test("indexa por e-mail normalizado", () => {
-    expect(parsed.byEmail.get("pessoa1@exemplo.test")?.nome).toBe("Ana Beatriz Lima");
+    expect(parsed.byEmail.get("pessoa2@exemplo.test")?.nome).toBe("Bruno Henrique Costa");
+  });
+
+  test("agrupa equipes declaradas", () => {
+    expect(parsed.teams.get("7")?.members.map((m) => m.nome)).toEqual(["Ana Beatriz Lima", "Bruno Henrique Costa", "Caio Dias"]);
+    expect(parsed.teams.get("7")?.label).toBe("Equipe 07");
+    expect(parsed.teams.get("os urbanistas")?.members).toHaveLength(2);
+    expect(parsed.teams.size).toBe(3);
+  });
+
+  test("individuais ficam sem equipe", () => {
+    expect(parsed.byEmail.get("pessoa4@exemplo.test")?.equipeKey).toBeNull();
+    expect(parsed.byEmail.get("pessoa7@exemplo.test")?.equipeKey).toBeNull();
   });
 
   test("e-mail duplicado: vale a última linha", () => {
-    expect(parsed.byEmail.get("pessoa4@exemplo.test")?.row).toBe(15);
+    expect(parsed.byEmail.get("pessoa4@exemplo.test")?.row).toBe(9);
     expect(parsed.all.filter((i) => i.email === "pessoa4@exemplo.test")).toHaveLength(1);
     expect(parsed.issues.some((i) => i.kind === "duplicate_email")).toBe(true);
   });
 
   test("e-mail inválido vira problema e é ignorado", () => {
-    expect(parsed.issues.find((i) => i.kind === "invalid_email")?.row).toBe(16);
+    expect(parsed.issues.find((i) => i.kind === "invalid_email")?.row).toBe(10);
+    expect(parsed.all).toHaveLength(10);
+  });
+
+  test("equipe acima do limite gera alerta", () => {
+    const small = parseSheet(buildFixture(), { maxTeamSize: 2 });
+    const over = small.issues.filter((i) => i.kind === "oversize_team");
+    expect(over.map((i) => i.message.match(/"(.+?)"/)?.[1])).toEqual(["Equipe 07", "Grandona"]);
   });
 
   test("mensagens de problema não contêm e-mails", () => {
@@ -50,13 +67,14 @@ describe("parseSheet", () => {
   });
 
   test("coluna obrigatória ausente", () => {
-    const r = parseSheet([["Nome Completo"], ["Ana"]]);
+    const r = parseSheet([["Nome"], ["Ana"]], { maxTeamSize: 5 });
     expect(r.all).toHaveLength(0);
     expect(r.issues.map((i) => i.message).join(" ")).toContain("email (obrigatória)");
   });
 
-  test("áreas de interesse separadas", () => {
-    // linha 5 foi substituída pela 15 (duplicada)
-    expect(parsed.byEmail.get("pessoa4@exemplo.test")?.areas).toEqual(["Energia"]);
+  test("sem coluna Equipe: todos individuais, com aviso", () => {
+    const r = parseSheet([["Nome", "E-mail"], ["Ana", "a@b.test"]], { maxTeamSize: 5 });
+    expect(r.all[0]?.equipeKey).toBeNull();
+    expect(r.issues[0]?.message).toContain("individuais");
   });
 });

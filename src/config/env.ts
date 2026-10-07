@@ -10,21 +10,27 @@ const optionalId = z
 const intWithDefault = (def: number, min = 1) =>
   z.coerce.number().int().min(min).default(def);
 
-const emptyToUndefined = z
+/**
+ * Aceita valores colados direto do JSON da chave: remove vírgula final e aspas
+ * que sobraram ("valor", → valor).
+ */
+const pastedValue = z
   .string()
-  .trim()
   .optional()
-  .transform((v) => (v ? v : undefined));
+  .transform((v) => {
+    const s = (v ?? "").trim().replace(/,$/, "").trim().replace(/^"([\s\S]*)"$/, "$1");
+    return s ? s : undefined;
+  });
 
 const sheetsSchema = z
   .object({
     GOOGLE_SHEET_ID: z.string().trim().min(1, "obrigatório"),
     GOOGLE_SHEET_RANGE: z.string().trim().min(1).default("Página1"),
     // Opção A: e-mail + chave privada (com \n literais, como vem no JSON)
-    GOOGLE_SERVICE_ACCOUNT_EMAIL: emptyToUndefined,
-    GOOGLE_PRIVATE_KEY: emptyToUndefined,
+    GOOGLE_SERVICE_ACCOUNT_EMAIL: pastedValue,
+    GOOGLE_PRIVATE_KEY: pastedValue,
     // Opção B: JSON inteiro da chave em base64
-    GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: emptyToUndefined,
+    GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: pastedValue,
     SHEETS_REFRESH_MINUTES: intWithDefault(5),
   })
   .refine(
@@ -46,6 +52,10 @@ const botSchema = z.object({
   CHANNEL_BOT_LOGS_ID: optionalId,
   TEAM_MAX_SIZE: intWithDefault(5, 2),
   TEAMS_PER_CATEGORY: z.coerce.number().int().min(1).max(25).default(25),
+  EQUIPES_PLANILHA_ABERTAS: z
+    .string()
+    .optional()
+    .transform((v) => ["true", "1", "sim", "yes"].includes((v ?? "").trim().toLowerCase())),
   DESAFIO_PRAZO: z
     .string()
     .trim()

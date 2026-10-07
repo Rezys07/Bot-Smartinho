@@ -1,38 +1,34 @@
-export type ParticipationMode = 1 | 2 | 3;
-
-export const MODE_LABEL: Record<ParticipationMode, string> = {
-  1: "individual",
-  2: "equipe formada",
-  3: "equipe parcial",
-};
-
-/** Uma linha válida da planilha de inscrições. */
+/** Uma linha válida da planilha de inscrições (colunas: Nome, E-mail, Equipe). */
 export interface Inscricao {
   /** Linha na planilha (1 = cabeçalho), para a organização localizar. */
   row: number;
   email: string;
   nome: string;
-  telefone: string;
-  instituicao: string;
-  curso: string;
-  areas: string[];
-  modo: ParticipationMode | null;
-  /** Texto bruto de "Quantos integrantes sua equipe já possui?". */
-  integrantesQtdRaw: string;
-  /** Texto bruto de "Nome dos integrantes da equipe". */
-  integrantesRaw: string;
+  /** Valor da coluna Equipe como foi escrito (null = individual). */
+  equipe: string | null;
+  /** Chave normalizada da equipe ("Equipe 07" e "7" viram "7"). */
+  equipeKey: string | null;
 }
 
 export interface SheetIssue {
-  kind: "missing_column" | "invalid_email" | "unknown_mode" | "duplicate_email" | "missing_name";
+  kind: "missing_column" | "invalid_email" | "duplicate_email" | "missing_name" | "oversize_team";
   row?: number;
-  /** Mensagem sem dados pessoais (sem e-mail/telefone). */
+  /** Mensagem sem dados pessoais (sem e-mail). */
   message: string;
 }
 
+/** Equipe definida pela organização na planilha. */
+export interface DeclaredTeam {
+  key: string;
+  /** Rótulo como aparece na planilha (primeira ocorrência). */
+  label: string;
+  members: Inscricao[];
+}
+
 export interface ParsedSheet {
-  /** Indexado pelo e-mail normalizado; em duplicatas vale a linha mais recente. */
+  /** Indexado pelo e-mail normalizado; em duplicatas vale a última linha. */
   byEmail: Map<string, Inscricao>;
   all: Inscricao[];
+  teams: Map<string, DeclaredTeam>;
   issues: SheetIssue[];
 }
