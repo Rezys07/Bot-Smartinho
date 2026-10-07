@@ -1,0 +1,21 @@
+# Dados pessoais e segredos (LGPD) — nunca versionar
+data/
+.env
+.env.*
+!.env.example
+*.xlsx
+*.csv
+*service-account*.json
+*-credentials.json
+
+# Estado do bot
+*.sqlite
+*.sqlite-*
+*.db
+
+# Build / deps
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
