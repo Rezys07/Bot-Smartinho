@@ -1,0 +1,97 @@
+import { Client, Events, GatewayIntentBits, Partials, RESTEvents } from "discord.js";
+import { loadBotEnv, loadSheetsEnv } from "./config/env";
+import { openDatabase } from "./db";
+import { Repo } from "./db/repo";
+import { logger } from "./logger";
+import type { BotContext } from "./bot/context";
+import { describeDiscordError, makeAudit } from "./bot/messaging";
+import { resolveResources } from "./bot/resources";
+import { handleMessage } from "./commands/router";
+import { GoogleSheetSource } from "./sheets/client";
+import { InscricoesStore } from "./sheets/store";
+import { CheckinService } from "./teams/checkin";
+import { DiscordTeamGateway } from "./teams/discordGateway";
+import { Mutex } from "./util/mutex";
+import { SlidingWindowLimiter } from "./util/rateLimiter";
+
+async function main() {
+  const env = loadBotEnv();
+  const sheetsEnv = loadSheetsEnv();
+  const repo = new Repo(openDatabase(env.DATABASE_PATH));
+
+  const store = new InscricoesStore(new GoogleSheetSource(sheetsEnv), {
+    maxTeamSize: env.TEAM_MAX_SIZE,
+    refreshMinutes: sheetsEnv.SHEETS_REFRESH_MINUTES,
+    logger,
+  });
+  const first = await store.refresh();
+  if (!first.ok) logger.error("planilha indisponível na inicialização; check-ins serão recusados até o próximo sync");
+  store.start();
+
+  const client = new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+    ],
+    partials: [Partials.GuildMember],
+  });
+
+  client.rest.on(RESTEvents.RateLimited, (info) =>
+    logger.warn({ route: info.route, retryAfter: info.retryAfter, global: info.global }, "discord: rate limit"),
+  );
+  client.on(Events.Error, (err) => logger.error({ err: describeDiscordError(err) }, "discord: erro no cliente"));
+  client.on(Events.Warn, (msg) => logger.warn({ msg }, "discord: aviso"));
+
+  let ctx: BotContext | null = null;
+
+  client.once(Events.ClientReady, async (ready) => {
+    try {
+      const guild = await ready.guilds.fetch(env.DISCORD_GUILD_ID);
+      await guild.members.fetchMe();
+      const resources = await resolveResources(guild, env);
+      const gateway = new DiscordTeamGateway(guild, repo, resources.roles, env.TEAMS_PER_CATEGORY);
+      const checkin = new CheckinService({
+        repo,
+        store,
+        gateway,
+        limiter: new SlidingWindowLimiter(env.CHECKIN_MAX_TENTATIVAS, env.CHECKIN_JANELA_MINUTOS * 60_000),
+        mutex: new Mutex(),
+        maxTeamSize: env.TEAM_MAX_SIZE,
+        sheetTeamsOpen: env.EQUIPES_PLANILHA_ABERTAS,
+      });
+      ctx = { ...resources, client: ready, guild, env, repo, store, checkin, gateway, audit: makeAudit(resources.channels.botLogs) };
+      if (!resources.channels.botLogs) logger.warn("canal #bot-logs não encontrado; registros só no log do processo");
+      logger.info({ user: ready.user.tag, guild: guild.name }, "bot pronto");
+      await ctx.audit(
+        `🤖 Bot iniciado. Inscrições carregadas: ${store.snapshot?.sheet.all.length ?? "planilha indisponível"}.`,
+      );
+    } catch (err) {
+      logger.fatal({ err: describeDiscordError(err) }, "falha na inicialização");
+      await shutdown(1);
+    }
+  });
+
+  client.on(Events.MessageCreate, (msg) => {
+    if (!ctx) return;
+    void handleMessage(ctx, msg).catch((err) => logger.error({ err: describeDiscordError(err) }, "erro ao tratar mensagem"));
+  });
+
+  async function shutdown(code = 0) {
+    logger.info("encerrando");
+    store.stop();
+    await client.destroy().catch(() => undefined);
+    repo.db.close();
+    process.exit(code);
+  }
+  process.on("SIGINT", () => void shutdown());
+  process.on("SIGTERM", () => void shutdown());
+
+  await client.login(env.DISCORD_TOKEN);
+}
+
+main().catch((err) => {
+  logger.fatal({ err: err instanceof Error ? err.message : String(err) }, "falha ao iniciar");
+  process.exit(1);
+});
