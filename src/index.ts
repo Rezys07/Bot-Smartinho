@@ -68,7 +68,8 @@ async function main() {
         `🤖 Bot iniciado. Inscrições carregadas: ${store.snapshot?.sheet.all.length ?? "planilha indisponível"}.`,
       );
     } catch (err) {
-      logger.fatal({ err: describeDiscordError(err) }, "falha na inicialização");
+      const message = describeDiscordError(err);
+      logger.fatal({ err: message, dica: startupHint(message) }, "falha na inicialização");
       await shutdown(1);
     }
   });
@@ -91,7 +92,22 @@ async function main() {
   await client.login(env.DISCORD_TOKEN);
 }
 
+/** Dicas para os erros de inicialização mais comuns. */
+function startupHint(message: string): string | undefined {
+  if (/disallowed intents/i.test(message)) {
+    return "Ative 'Server Members Intent' e 'Message Content Intent' em discord.com/developers/applications → sua aplicação → Bot → Privileged Gateway Intents, e salve.";
+  }
+  if (/invalid token/i.test(message)) {
+    return "DISCORD_TOKEN inválido. Gere outro em Developer Portal → Bot → Reset Token e cole no .env (sem aspas).";
+  }
+  if (/Unknown Guild|Missing Access/i.test(message)) {
+    return "Confira DISCORD_GUILD_ID e se o bot foi convidado para o servidor.";
+  }
+  return undefined;
+}
+
 main().catch((err) => {
-  logger.fatal({ err: err instanceof Error ? err.message : String(err) }, "falha ao iniciar");
+  const message = err instanceof Error ? err.message : String(err);
+  logger.fatal({ err: message, dica: startupHint(message) }, "falha ao iniciar");
   process.exit(1);
 });
