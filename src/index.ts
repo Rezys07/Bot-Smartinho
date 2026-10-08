@@ -8,6 +8,8 @@ import { describeDiscordError, makeAudit } from "./bot/messaging";
 import { resolveResources } from "./bot/resources";
 import { handleMessage } from "./commands/router";
 import "./commands/desafio";
+import "./commands/checkinButton";
+import { handleInteraction } from "./commands/interactions";
 import { ensureCheckinInstructions } from "./commands/checkinInstructions";
 import { GoogleSheetSource } from "./sheets/client";
 import { InscricoesStore } from "./sheets/store";
@@ -105,6 +107,11 @@ async function main() {
   client.on(Events.MessageCreate, (msg) => {
     if (!ctx) return;
     void handleMessage(ctx, msg).catch((err) => logger.error({ err: describeDiscordError(err) }, "erro ao tratar mensagem"));
+  });
+
+  client.on(Events.InteractionCreate, (i) => {
+    if (!ctx) return;
+    void handleInteraction(ctx, i).catch((err) => logger.error({ err: describeDiscordError(err) }, "erro ao tratar interação"));
   });
 
   async function shutdown(code = 0) {

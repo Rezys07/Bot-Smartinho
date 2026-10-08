@@ -35,3 +35,12 @@ describe("teamTopic", () => {
     expect(teamTopic({ ...base, sheet_label: null, desafio: "1" }, "Mobilidade")).toBe("Equipe 007 · Desafio: Mobilidade");
   });
 });
+
+import { splitCustomId } from "../src/commands/interactions";
+
+describe("splitCustomId", () => {
+  test("prefixo:ação[:argumento]", () => {
+    expect(splitCustomId("checkin:abrir")).toEqual({ key: "checkin:abrir", arg: "" });
+    expect(splitCustomId("mentoria:atender:12")).toEqual({ key: "mentoria:atender", arg: "12" });
+  });
+});

@@ -3,12 +3,13 @@ import { MessageType } from "discord.js";
 import type { BotContext } from "../bot/context";
 import { describeDiscordError } from "../bot/messaging";
 import { logger } from "../logger";
+import { CHECKIN_BUTTON_ID, checkinButtonRow } from "./checkinButton";
 
 const META_KEY = "checkin_instructions_message_id";
 
 /**
  * Garante a mensagem fixada de instruções no #check-in (idempotente):
- * cria na primeira vez, edita se o texto do arquivo mudou e recria se foi apagada.
+ * cria na primeira vez, edita se o texto do arquivo mudou (ou falta o botão) e recria se foi apagada.
  */
 export async function ensureCheckinInstructions(ctx: BotContext, path: string): Promise<void> {
   const content = readFileSync(path, "utf8").trim();
@@ -18,15 +19,16 @@ export async function ensureCheckinInstructions(ctx: BotContext, path: string): 
     const existing = savedId ? await channel.messages.fetch(savedId).catch(() => null) : null;
 
     if (existing) {
-      if (existing.content !== content) {
-        await existing.edit({ content, allowedMentions: { parse: [] } });
+      const hasButton = existing.components.some((row) => JSON.stringify(row.toJSON()).includes(CHECKIN_BUTTON_ID));
+      if (existing.content !== content || !hasButton) {
+        await existing.edit({ content, components: [checkinButtonRow()], allowedMentions: { parse: [] } });
         logger.info("mensagem de check-in atualizada");
       }
       if (!existing.pinned) await existing.pin().catch(() => undefined);
       return;
     }
 
-    const msg = await channel.send({ content, allowedMentions: { parse: [] } });
+    const msg = await channel.send({ content, components: [checkinButtonRow()], allowedMentions: { parse: [] } });
     ctx.repo.setMeta(META_KEY, msg.id);
     await msg.pin("Instruções de check-in");
     // Remove o aviso "fixou uma mensagem" para o canal ficar limpo.
