@@ -10,6 +10,9 @@ import { handleMessage } from "./commands/router";
 import "./commands/desafio";
 import "./commands/checkinButton";
 import { handleInteraction } from "./commands/interactions";
+import { startMentoringAlerts, topicMentorIds } from "./mentoring/discord";
+import { MentoringRequests } from "./mentoring/requests";
+import { loadTopics } from "./mentoring/topics";
 import { ensureCheckinInstructions } from "./commands/checkinInstructions";
 import { GoogleSheetSource } from "./sheets/client";
 import { InscricoesStore } from "./sheets/store";
@@ -23,6 +26,7 @@ import { SlidingWindowLimiter } from "./util/rateLimiter";
 const CONFIG = {
   desafios: "config/desafios.json",
   mensagemCheckin: "config/mensagem-checkin.md",
+  mentoria: "config/mentoria.json",
 };
 
 async function main() {
@@ -30,6 +34,9 @@ async function main() {
   const sheetsEnv = loadSheetsEnv();
   const repo = new Repo(openDatabase(env.DATABASE_PATH));
   const desafios = loadDesafios(CONFIG.desafios);
+  const topics = loadTopics(CONFIG.mentoria);
+  const mentoring = new MentoringRequests(repo.db);
+  let stopAlerts: (() => void) | null = null;
 
   const store = new InscricoesStore(new GoogleSheetSource(sheetsEnv), {
     maxTeamSize: env.TEAM_MAX_SIZE,
@@ -62,6 +69,8 @@ async function main() {
     try {
       const guild = await ready.guilds.fetch(env.DISCORD_GUILD_ID);
       await guild.members.fetchMe();
+      // Cache completo de membros: necessário para achar mentores por nome (temas de mentoria).
+      await guild.members.fetch();
       const resources = await resolveResources(guild, env);
       const gateway = new DiscordTeamGateway(
         guild,
@@ -89,10 +98,22 @@ async function main() {
         checkin,
         gateway,
         desafios,
+        mentoring,
+        topics,
         audit: makeAudit(resources.channels.botLogs),
       };
+      const readyCtx = ctx;
+      stopAlerts = startMentoringAlerts(readyCtx);
+      for (const t of topics) {
+        const { unresolved } = topicMentorIds(readyCtx, t);
+        if (unresolved.length) {
+          await readyCtx.audit(
+            `⚠️ Tema de mentoria "${t.nome}": não achei o mentor ${unresolved.map((u) => `"${u}"`).join(", ")} entre quem tem o cargo Mentor (ou o nome bate com mais de um). Ajuste config/mentoria.json.`,
+          );
+        }
+      }
       if (!resources.channels.botLogs) logger.warn("canal #bot-logs não encontrado; registros só no log do processo");
-      await ensureCheckinInstructions(ctx, CONFIG.mensagemCheckin);
+      await ensureCheckinInstructions(readyCtx, CONFIG.mensagemCheckin);
       logger.info({ user: ready.user.tag, guild: guild.name, desafios: desafios.length }, "bot pronto");
       await ctx.audit(
         `🤖 Bot iniciado. Inscrições carregadas: ${store.snapshot?.sheet.all.length ?? "planilha indisponível"}.`,
@@ -117,6 +138,7 @@ async function main() {
   async function shutdown(code = 0) {
     logger.info("encerrando");
     store.stop();
+    stopAlerts?.();
     await client.destroy().catch(() => undefined);
     repo.db.close();
     process.exit(code);

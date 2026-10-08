@@ -14,6 +14,7 @@ import type { Repo, TeamRow } from "../db/repo";
 import { logger } from "../logger";
 import { looseName } from "../bot/resources";
 import type { TeamGateway } from "./checkin";
+import { mentoriaButtonRow } from "../mentoring/discord";
 import { categoryIndex, categoryName, teamName } from "./naming";
 
 const MEMBER_ALLOW = {
@@ -142,13 +143,13 @@ export class DiscordTeamGateway implements TeamGateway {
           "",
           "**Comandos**",
           "`!desafio` — lista os desafios; `!desafio <opção>` escolhe o da equipe",
-          "`!queromentoria <o que vocês precisam>` — pede ajuda a um mentor",
+          "`!queromentoria <o que vocês precisam>` — pede ajuda a um mentor (ou use o botão abaixo)",
           "`!queromentoria @mentor <descrição>` — pede um mentor específico",
         ]
           .filter((l) => l !== null)
           .join("\n"),
       );
-    const msg = await channel.send({ embeds: [embed] });
+    const msg = await channel.send({ embeds: [embed], components: [mentoriaButtonRow()] });
     await msg.pin().catch(() => undefined);
   }
 

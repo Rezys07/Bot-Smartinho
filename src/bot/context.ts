@@ -1,6 +1,8 @@
 import { PermissionFlagsBits, type Client, type Guild, type GuildMember } from "discord.js";
 import type { BotEnv } from "../config/env";
 import type { Repo } from "../db/repo";
+import type { MentoringRequests } from "../mentoring/requests";
+import type { Topic } from "../mentoring/topics";
 import type { InscricoesStore } from "../sheets/store";
 import type { CheckinService } from "../teams/checkin";
 import type { Desafio } from "../teams/desafios";
@@ -17,6 +19,8 @@ export interface BotContext extends Resources {
   checkin: CheckinService;
   gateway: DiscordTeamGateway;
   desafios: Desafio[];
+  mentoring: MentoringRequests;
+  topics: Topic[];
   audit: Audit;
 }
 
