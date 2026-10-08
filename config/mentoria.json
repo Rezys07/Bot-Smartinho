@@ -1,0 +1,26 @@
+{
+  "$comentario": "Temas sugeridos no pedido de mentoria. 'mentores' aceita o ID do Discord ou o nome do mentor no servidor; ele é avisado quando o tema é escolhido. 'Outro assunto' é adicionado automaticamente.",
+  "temas": [
+    {
+      "id": "dor",
+      "nome": "Validação da dor/problema",
+      "descricao": "O problema é real? Para quem? Como validar?"
+    },
+    {
+      "id": "canvas",
+      "nome": "Canvas",
+      "descricao": "Modelo de negócio, proposta de valor e público"
+    },
+    {
+      "id": "mvp",
+      "nome": "Desenvolvimento do MVP",
+      "descricao": "Escopo, tecnologia e o que construir primeiro"
+    },
+    {
+      "id": "pitch",
+      "nome": "Pitch",
+      "descricao": "Apresentação, roteiro e tempo",
+      "mentores": ["Bruno Teixeira"]
+    }
+  ]
+}

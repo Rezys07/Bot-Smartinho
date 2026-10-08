@@ -37,6 +37,27 @@ const MIGRATIONS: string[] = [
     value TEXT
   );
   `,
+  `
+  CREATE TABLE mentoring_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    team_number INTEGER NOT NULL REFERENCES teams(number),
+    topic TEXT NOT NULL,
+    description TEXT NOT NULL,
+    requested_by TEXT NOT NULL,
+    requested_mentor_id TEXT,
+    status TEXT NOT NULL DEFAULT 'aberta',      -- aberta | em_atendimento | finalizada | cancelada
+    mentor_id TEXT,
+    granted_access INTEGER NOT NULL DEFAULT 0,  -- 1 = bot deu acesso temporário ao mentor
+    queue_message_id TEXT,
+    alerted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    claimed_at TEXT,
+    finished_at TEXT
+  );
+  -- Uma solicitação ativa por equipe, garantido pelo banco (à prova de clique duplo).
+  CREATE UNIQUE INDEX mentoring_one_active_per_team
+    ON mentoring_requests(team_number) WHERE status IN ('aberta', 'em_atendimento');
+  `,
 ];
 
 export function openDatabase(path: string): Database {
