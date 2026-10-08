@@ -7,17 +7,27 @@ import type { BotContext } from "./bot/context";
 import { describeDiscordError, makeAudit } from "./bot/messaging";
 import { resolveResources } from "./bot/resources";
 import { handleMessage } from "./commands/router";
+import "./commands/desafio";
+import { ensureCheckinInstructions } from "./commands/checkinInstructions";
 import { GoogleSheetSource } from "./sheets/client";
 import { InscricoesStore } from "./sheets/store";
 import { CheckinService } from "./teams/checkin";
 import { DiscordTeamGateway } from "./teams/discordGateway";
+import { loadDesafios } from "./teams/desafios";
 import { Mutex } from "./util/mutex";
 import { SlidingWindowLimiter } from "./util/rateLimiter";
+
+/** Arquivos editáveis pela organização (relativos à pasta do projeto). */
+const CONFIG = {
+  desafios: "config/desafios.json",
+  mensagemCheckin: "config/mensagem-checkin.md",
+};
 
 async function main() {
   const env = loadBotEnv();
   const sheetsEnv = loadSheetsEnv();
   const repo = new Repo(openDatabase(env.DATABASE_PATH));
+  const desafios = loadDesafios(CONFIG.desafios);
 
   const store = new InscricoesStore(new GoogleSheetSource(sheetsEnv), {
     maxTeamSize: env.TEAM_MAX_SIZE,
@@ -51,7 +61,13 @@ async function main() {
       const guild = await ready.guilds.fetch(env.DISCORD_GUILD_ID);
       await guild.members.fetchMe();
       const resources = await resolveResources(guild, env);
-      const gateway = new DiscordTeamGateway(guild, repo, resources.roles, env.TEAMS_PER_CATEGORY);
+      const gateway = new DiscordTeamGateway(
+        guild,
+        repo,
+        resources.roles,
+        env.TEAMS_PER_CATEGORY,
+        (id) => desafios.find((d) => d.id === id)?.nome ?? id,
+      );
       const checkin = new CheckinService({
         repo,
         store,
@@ -61,9 +77,21 @@ async function main() {
         maxTeamSize: env.TEAM_MAX_SIZE,
         sheetTeamsOpen: env.EQUIPES_PLANILHA_ABERTAS,
       });
-      ctx = { ...resources, client: ready, guild, env, repo, store, checkin, gateway, audit: makeAudit(resources.channels.botLogs) };
+      ctx = {
+        ...resources,
+        client: ready,
+        guild,
+        env,
+        repo,
+        store,
+        checkin,
+        gateway,
+        desafios,
+        audit: makeAudit(resources.channels.botLogs),
+      };
       if (!resources.channels.botLogs) logger.warn("canal #bot-logs não encontrado; registros só no log do processo");
-      logger.info({ user: ready.user.tag, guild: guild.name }, "bot pronto");
+      await ensureCheckinInstructions(ctx, CONFIG.mensagemCheckin);
+      logger.info({ user: ready.user.tag, guild: guild.name, desafios: desafios.length }, "bot pronto");
       await ctx.audit(
         `🤖 Bot iniciado. Inscrições carregadas: ${store.snapshot?.sheet.all.length ?? "planilha indisponível"}.`,
       );

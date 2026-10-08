@@ -32,6 +32,6 @@ describe("teamTopic", () => {
   test("inclui rótulo e desafio", () => {
     const base = { number: 7, sheet_key: "x", sheet_label: "Os Urbanistas", open: 0, text_channel_id: null, voice_channel_id: null, desafio: null, desafio_at: null, created_at: "" };
     expect(teamTopic(base)).toBe("Equipe 007 · Nome na inscrição: Os Urbanistas · Desafio: não escolhido (use !desafio)");
-    expect(teamTopic({ ...base, sheet_label: null, desafio: "Mobilidade" })).toBe("Equipe 007 · Desafio: Mobilidade");
+    expect(teamTopic({ ...base, sheet_label: null, desafio: "1" }, "Mobilidade")).toBe("Equipe 007 · Desafio: Mobilidade");
   });
 });

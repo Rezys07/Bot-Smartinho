@@ -1,0 +1,20 @@
+{
+  "$comentario": "Desafios do hackathon. 'id' é o que a equipe digita (!desafio 1). Edite e reinicie o bot.",
+  "desafios": [
+    {
+      "id": "1",
+      "nome": "Mobilidade Urbana",
+      "descricao": "Soluções para deslocamento, transporte público, trânsito e acessibilidade na cidade."
+    },
+    {
+      "id": "2",
+      "nome": "Sustentabilidade e Meio Ambiente",
+      "descricao": "Soluções para energia, resíduos, água e qualidade ambiental urbana."
+    },
+    {
+      "id": "3",
+      "nome": "Serviços Públicos Digitais",
+      "descricao": "Soluções que aproximam cidadãos e governo: atendimento, dados abertos e participação."
+    }
+  ]
+}

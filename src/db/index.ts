@@ -31,6 +31,12 @@ const MIGRATIONS: string[] = [
     voice_category_id TEXT
   );
   `,
+  `
+  CREATE TABLE meta (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  );
+  `,
 ];
 
 export function openDatabase(path: string): Database {

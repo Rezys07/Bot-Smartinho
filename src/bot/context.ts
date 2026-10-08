@@ -3,6 +3,7 @@ import type { BotEnv } from "../config/env";
 import type { Repo } from "../db/repo";
 import type { InscricoesStore } from "../sheets/store";
 import type { CheckinService } from "../teams/checkin";
+import type { Desafio } from "../teams/desafios";
 import type { DiscordTeamGateway } from "../teams/discordGateway";
 import type { Audit } from "./messaging";
 import type { Resources } from "./resources";
@@ -15,6 +16,7 @@ export interface BotContext extends Resources {
   store: InscricoesStore;
   checkin: CheckinService;
   gateway: DiscordTeamGateway;
+  desafios: Desafio[];
   audit: Audit;
 }
 

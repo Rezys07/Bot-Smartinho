@@ -32,10 +32,10 @@ const MEMBER_ALLOW = {
 const STAFF_ALLOW = [P.ViewChannel, P.SendMessages, P.ReadMessageHistory, P.AttachFiles, P.EmbedLinks, P.Connect, P.Speak, P.Stream, P.UseVAD];
 const BOT_ALLOW = [P.ViewChannel, P.SendMessages, P.ReadMessageHistory, P.EmbedLinks, P.ManageChannels, P.ManageRoles, P.ManageMessages, P.Connect];
 
-export function teamTopic(team: TeamRow): string {
+export function teamTopic(team: TeamRow, desafioNome?: string | null): string {
   const parts = [`Equipe ${String(team.number).padStart(3, "0")}`];
   if (team.sheet_label) parts.push(`Nome na inscrição: ${team.sheet_label}`);
-  parts.push(`Desafio: ${team.desafio ?? "não escolhido (use !desafio)"}`);
+  parts.push(`Desafio: ${desafioNome ?? team.desafio ?? "não escolhido (use !desafio)"}`);
   return parts.join(" · ");
 }
 
@@ -46,6 +46,8 @@ export class DiscordTeamGateway implements TeamGateway {
     private readonly repo: Repo,
     private readonly roles: { mentor: Role; organizacao: Role },
     private readonly perCategory: number,
+    /** id do desafio → nome, para o tópico do canal. */
+    private readonly desafioNome: (id: string | null) => string | null = () => null,
   ) {}
 
   private baseOverwrites(): OverwriteResolvable[] {
@@ -107,7 +109,7 @@ export class DiscordTeamGateway implements TeamGateway {
         name,
         type: ChannelType.GuildText,
         parent: await this.ensureCategory(team.number, false),
-        topic: teamTopic(team),
+        topic: teamTopic(team, this.desafioNome(team.desafio)),
         permissionOverwrites: this.baseOverwrites(),
         reason: `Canal da ${name}`,
       });
@@ -175,6 +177,7 @@ export class DiscordTeamGateway implements TeamGateway {
   /** Atualiza o tópico do canal de texto (ex.: após escolher desafio). */
   async refreshTopic(team: TeamRow): Promise<void> {
     const text = await this.getChannel<TextChannel>(team.text_channel_id);
-    await text?.setTopic(teamTopic(team));
+    // O Discord limita edições de nome/tópico a 2 a cada 10 min por canal; o discord.js enfileira.
+    await text?.setTopic(teamTopic(team, this.desafioNome(team.desafio)));
   }
 }

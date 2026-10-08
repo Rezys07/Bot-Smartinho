@@ -108,6 +108,23 @@ export class Repo {
     this.db.query("UPDATE teams SET text_channel_id = ?, voice_channel_id = ? WHERE number = ?").run(textId, voiceId, number);
   }
 
+  setDesafio(number: number, desafioId: string) {
+    this.db
+      .query("UPDATE teams SET desafio = ?, desafio_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE number = ?")
+      .run(desafioId, number);
+  }
+
+  // ── Meta (chave/valor) ───────────────────────────────────
+  getMeta(key: string): string | null {
+    return this.db.query<{ value: string }, [string]>("SELECT value FROM meta WHERE key = ?").get(key)?.value ?? null;
+  }
+
+  setMeta(key: string, value: string) {
+    this.db
+      .query("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
+      .run(key, value);
+  }
+
   // ── Categorias ───────────────────────────────────────────
   category(idx: number): CategoryRow | null {
     return this.db.query<CategoryRow, [number]>("SELECT * FROM team_categories WHERE idx = ?").get(idx);
