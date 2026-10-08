@@ -15,7 +15,7 @@ export async function applyParticipantIdentity(
   const problems: string[] = [];
   if (!member.roles.cache.has(ctx.roles.participante.id)) {
     await member.roles.add(ctx.roles.participante, "Check-in no hackathon").catch((err) => {
-      problems.push(`cargo Participante: ${describeDiscordError(err)}`);
+      problems.push(`cargo ${ctx.roles.participante.name}: ${describeDiscordError(err)}`);
     });
   }
   const nick = buildNickname(participant.display_name, team?.number ?? null);

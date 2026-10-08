@@ -3,7 +3,7 @@ import type { BotEnv } from "../config/env";
 
 /** Nomes padrão (usados quando o ID não está no .env). */
 export const RESOURCE_NAMES = {
-  participante: "Participante",
+  participante: "Convidado", // cargo dado no check-in
   mentor: "Mentor",
   organizacao: "Organização",
   checkin: "check-in",
