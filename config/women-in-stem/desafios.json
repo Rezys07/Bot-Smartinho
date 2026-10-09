@@ -1,65 +1,80 @@
 {
-  "$comentario": "Hackathon challenges (12, by area). 'id' is what teams type (!challenge 1). Edit and restart the bot.",
+  "$comentario": "Women in STEM challenges (15, in 4 axes). 'id' is what teams type (!challenge 1). Edit and restart the bot.",
   "desafios": [
     {
       "id": "1",
-      "nome": "Health — Waiting lists for appointments and tests",
-      "descricao": "Reduce waiting lists for medical appointments and exams."
+      "nome": "Education & Retention — Role models and early interest",
+      "descricao": "Limited access for girls and young women to role models, experiences, and opportunities that spark interest in STEM."
     },
     {
       "id": "2",
-      "nome": "Technology & Innovation — Public transparency",
-      "descricao": "Increase transparency in public administration and make it easier for citizens to access information."
+      "nome": "Education & Retention — Staying and progressing in STEM",
+      "descricao": "Difficulties faced by women in remaining and progressing in STEM academic pathways, particularly due to limited support networks and connections with other women in the field."
     },
     {
       "id": "3",
-      "nome": "Technology & Innovation — Civic participation",
-      "descricao": "Encourage citizens to take part in public decision-making."
+      "nome": "Education & Retention — International STEM experiences",
+      "descricao": "Limited access for female students to international STEM experiences, including collaborative projects, exchanges, research opportunities, and connections with institutions from other countries."
     },
     {
       "id": "4",
-      "nome": "Public Safety — Community engagement and communication",
-      "descricao": "Create clear and accessible communication channels to inform citizens about the benefits and risks of public safety technologies, encouraging the community to take an active part in decision-making."
+      "nome": "Career & Networking — Finding international opportunities",
+      "descricao": "Difficulty finding and accessing international STEM opportunities, such as scholarships, internships, jobs, research opportunities, events, and mobility programs, which are currently dispersed across different channels."
     },
     {
       "id": "5",
-      "nome": "Environment — Waste and recycling",
-      "descricao": "Develop solutions to optimize waste collection, reduce the amount of waste sent to landfills, promote recycling and reuse of materials, and educate citizens about sustainable waste management practices."
+      "nome": "Career & Networking — International mentoring",
+      "descricao": "Limited access to international mentoring and professional guidance networks for women at different stages of their STEM careers."
     },
     {
       "id": "6",
-      "nome": "Environment — Emergencies and natural disasters",
-      "descricao": "Build systems and technologies that improve the city's ability to respond to emergencies and natural disasters, including emergency communication systems, mapping of risk areas and coordination of rescue teams."
+      "nome": "Career & Networking — From connections to opportunities",
+      "descricao": "Difficulty turning international networking and connections into concrete research, career, collaboration, and business opportunities for women in STEM."
     },
     {
       "id": "7",
-      "nome": "Environment — Water consumption",
-      "descricao": "Monitor and manage water consumption in the city to prevent waste."
+      "nome": "Career & Networking — Skills gap",
+      "descricao": "Disconnect between the skills of women in STEM and the competencies required to access international academic and professional opportunities."
     },
     {
       "id": "8",
-      "nome": "Mobility — Accessibility",
-      "descricao": "Create solutions that improve accessibility for people with reduced mobility, including accessible sidewalks, adapted public transportation and on-demand mobility apps for people with disabilities."
+      "nome": "Visibility & Data — International visibility",
+      "descricao": "Low international visibility of women researchers, scientists, engineers, and professionals who could contribute to projects, events, research, and businesses."
     },
     {
       "id": "9",
-      "nome": "Mobility — Real-time public transportation",
-      "descricao": "Develop real-time tracking systems for public transportation assets, such as buses and trains, to improve arrival time accuracy, reduce passenger waiting times and optimize transportation operations."
+      "nome": "Visibility & Data — Building complementary teams",
+      "descricao": "Difficulty finding women researchers and professionals with complementary knowledge and skills to form teams and develop international innovation projects."
     },
     {
       "id": "10",
-      "nome": "Mobility — Cyclist and pedestrian safety",
-      "descricao": "Ensure the safety of cyclists and pedestrians in traffic."
+      "nome": "Visibility & Data — Data on women in STEM",
+      "descricao": "Lack of consolidated and accessible information on women's participation in STEM, making it difficult to identify opportunities, gaps, and areas requiring action."
     },
     {
       "id": "11",
-      "nome": "Energy — Energy efficiency",
-      "descricao": "Propose solutions to improve energy efficiency in public, residential and commercial buildings, including thermal insulation, efficient windows, LED lighting and smart temperature control systems."
+      "nome": "Innovation & Entrepreneurship — From research to market",
+      "descricao": "Difficulty turning research, scientific knowledge, and technologies developed by women into products, services, and businesses with market potential."
     },
     {
       "id": "12",
-      "nome": "Education — Personalized learning",
-      "descricao": "Create solutions that offer personalized learning experiences, adapted to each student's individual needs, using machine learning algorithms and educational data analysis."
+      "nome": "Innovation & Entrepreneurship — Investors and acceleration",
+      "descricao": "Limited access for women entrepreneurs in STEM to investors, acceleration programs, strategic partners, and international markets."
+    },
+    {
+      "id": "13",
+      "nome": "Innovation & Entrepreneurship — Academia–industry connection",
+      "descricao": "Disconnect between women researchers in STEM and companies interested in accessing technologies, knowledge, and solutions developed in academic environments."
+    },
+    {
+      "id": "14",
+      "nome": "Innovation & Entrepreneurship — Validating international markets",
+      "descricao": "Difficulty identifying and validating international markets for products and technologies developed by women in STEM."
+    },
+    {
+      "id": "15",
+      "nome": "Innovation & Entrepreneurship — Innovation networks",
+      "descricao": "Limited access for women in STEM to international networks capable of supporting the transformation of ideas and research into innovation projects and businesses."
     }
   ]
 }
