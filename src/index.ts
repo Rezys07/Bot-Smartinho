@@ -9,6 +9,7 @@ import { resolveResources } from "./bot/resources";
 import { handleMessage } from "./commands/router";
 import "./commands/desafio";
 import "./commands/checkinButton";
+import { createDeclaredTeams } from "./admin/equipes";
 import { handleInteraction } from "./commands/interactions";
 import { startMentoringAlerts, topicMentorIds } from "./mentoring/discord";
 import { MentoringRequests } from "./mentoring/requests";
@@ -123,6 +124,12 @@ async function main() {
       }
       if (!resources.channels.botLogs) logger.warn("canal #bot-logs não encontrado; registros só no log do processo");
       await ensureCheckinInstructions(readyCtx, CONFIG.mensagemCheckin);
+
+      // Canais de todas as equipes da planilha, antes do check-in (opcional).
+      if (env.CRIAR_EQUIPES_ANTECIPADO) {
+        await createDeclaredTeams(readyCtx);
+        store.onRefresh(() => void createDeclaredTeams(readyCtx).catch((err) => logger.error({ err: String(err) }, "falha ao criar equipes")));
+      }
 
       // Mentores e organização pela planilha de staff (sem check-in).
       if (sheetsEnv.STAFF_SHEET_ID) {

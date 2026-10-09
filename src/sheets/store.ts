@@ -22,6 +22,7 @@ export class InscricoesStore {
   private current: Snapshot | null = null;
   private inflight: Promise<RefreshResult> | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
+  private listeners: ((s: Snapshot) => void)[] = [];
 
   constructor(
     private readonly source: SheetSource,
@@ -55,12 +56,18 @@ export class InscricoesStore {
         { inscricoes: sheet.all.length, equipes: sheet.teams.size, problemas: sheet.issues.length },
         "sheets: cache atualizado",
       );
+      for (const l of this.listeners) l(this.current);
       return { ok: true, snapshot: this.current };
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       log.error({ err: error, cacheDe: this.current?.loadedAt }, "sheets: falha ao atualizar; usando cache");
       return { ok: false, error, snapshot: this.current };
     }
+  }
+
+  /** Chamado após cada leitura bem-sucedida da planilha. */
+  onRefresh(listener: (s: Snapshot) => void): void {
+    this.listeners.push(listener);
   }
 
   start(): void {

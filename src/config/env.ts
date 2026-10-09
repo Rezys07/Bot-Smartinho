@@ -55,6 +55,11 @@ const botSchema = z.object({
   CHANNEL_BOT_LOGS_ID: optionalId,
   TEAM_MAX_SIZE: intWithDefault(5, 2),
   TEAMS_PER_CATEGORY: z.coerce.number().int().min(1).max(25).default(25),
+  /** Cria os canais de todas as equipes da planilha já na inicialização (e a cada releitura). */
+  CRIAR_EQUIPES_ANTECIPADO: z
+    .string()
+    .optional()
+    .transform((v) => ["true", "1", "sim", "yes"].includes((v ?? "").trim().toLowerCase())),
   EQUIPES_PLANILHA_ABERTAS: z
     .string()
     .optional()

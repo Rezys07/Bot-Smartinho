@@ -95,6 +95,36 @@ export class CheckinService {
   }
 
   /**
+   * Cria antecipadamente (banco + canais privados) todas as equipes da coluna Equipe da planilha,
+   * na ordem em que aparecem. Idempotente; roda sob o mesmo mutex do check-in.
+   * Ninguém ganha acesso aqui — cada pessoa entra no canal da sua equipe ao fazer check-in.
+   */
+  async ensureDeclaredTeams(): Promise<{ created: TeamRow[]; errors: string[] }> {
+    return this.d.mutex.run(async () => {
+      const { repo, store, gateway, sheetTeamsOpen } = this.d;
+      const created: TeamRow[] = [];
+      const errors: string[] = [];
+      const declared = [...(store.snapshot?.sheet.teams.values() ?? [])].sort(
+        (a, b) => a.members[0]!.row - b.members[0]!.row,
+      );
+      for (const d of declared) {
+        let team = repo.teamBySheetKey(d.key);
+        if (!team) {
+          team = repo.createTeam({ sheetKey: d.key, sheetLabel: d.label, open: sheetTeamsOpen });
+          created.push(team);
+        }
+        if (team.text_channel_id && team.voice_channel_id) continue;
+        try {
+          await gateway.ensureTeamChannels(team);
+        } catch (err) {
+          errors.push(`${d.label}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+      return { created, errors };
+    });
+  }
+
+  /**
    * Coloca a pessoa numa equipe e registra o check-in. Deve rodar sob o mutex.
    * Usado também pelo `!forcar-entrada`.
    */

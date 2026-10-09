@@ -190,3 +190,35 @@ describe("check-in pelo usuário do Discord", () => {
     expect((await service.checkInByUsername("u1", "outro")).kind).toBe("already");
   });
 });
+
+describe("criação antecipada das equipes da planilha", () => {
+  test("cria todas as equipes declaradas, na ordem da planilha, sem dar acesso a ninguém", async () => {
+    const { service, gateway, repo } = await setup();
+    const r = await service.ensureDeclaredTeams();
+    // fixture: "Equipe 07" (linha 2), "Os Urbanistas" (linha 6), "Grandona" (linha 12)
+    expect(r.created.map((t) => t.sheet_label)).toEqual(["Equipe 07", "Os Urbanistas", "Grandona"]);
+    expect(gateway.created).toEqual([1, 2, 3]);
+    expect(gateway.access).toEqual([]);
+    expect(repo.teamsWithCounts().every((t) => t.text_channel_id && t.members === 0)).toBe(true);
+  });
+
+  test("idempotente e o check-in entra na equipe já criada", async () => {
+    const { service, gateway } = await setup();
+    await service.ensureDeclaredTeams();
+    expect((await service.ensureDeclaredTeams()).created).toEqual([]);
+    expect(gateway.created).toEqual([1, 2, 3]);
+    const r = await service.checkIn("u5", "pessoa5@exemplo.test"); // Os Urbanistas
+    expect(r.kind === "ok" && r.team.number).toBe(2);
+    expect(r.kind === "ok" && r.createdTeam).toBe(false);
+  });
+
+  test("falha no Discord é reportada e tentada de novo depois", async () => {
+    const { service, gateway } = await setup();
+    gateway.fail = true;
+    expect((await service.ensureDeclaredTeams()).errors).toHaveLength(3);
+    gateway.fail = false;
+    const again = await service.ensureDeclaredTeams();
+    expect(again.created).toEqual([]);
+    expect(gateway.created).toEqual([1, 2, 3]);
+  });
+});
