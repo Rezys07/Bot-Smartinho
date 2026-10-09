@@ -113,3 +113,23 @@ describe("planilha com usuário do Discord", () => {
     expect(r.teams.get("3")?.members).toHaveLength(1);
   });
 });
+
+describe("e-mail na coluna de usuário", () => {
+  test("é aproveitado como e-mail e a equipe é criada", () => {
+    const r = parseSheet(
+      [
+        ["nome", "usuario", "equipe"],
+        ["Ana", "Ana.Lima123@Exemplo.com", "Equipe Azul"],
+        ["Bia", "bia01", "Equipe Azul"],
+      ],
+      { maxTeamSize: 5 },
+    );
+    expect(r.hasEmailColumn).toBe(true);
+    expect(r.byEmail.get("ana.lima123@exemplo.com")?.nome).toBe("Ana");
+    expect(r.byEmail.get("ana.lima123@exemplo.com")?.usuario).toBeNull();
+    expect(r.byUsername.get("bia01")?.nome).toBe("Bia");
+    expect(r.teams.get("azul")?.members).toHaveLength(2);
+    expect(r.issues.some((i) => i.message.includes("e-mail na coluna de usuário"))).toBe(true);
+    for (const i of r.issues) expect(i.message).not.toContain("@");
+  });
+});

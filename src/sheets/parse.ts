@@ -59,7 +59,8 @@ export function parseSheet(values: unknown[][], opts: { maxTeamSize: number }): 
   }
 
   const { cols, missing } = mapHeaders((values[0] ?? []).map((v) => String(v ?? "")));
-  const hasEmailColumn = cols.email !== undefined;
+  let hasEmailColumn = cols.email !== undefined;
+  let emailsInUserColumn = 0;
   if (cols.nome === undefined) issues.push({ kind: "missing_column", message: "Coluna não encontrada: nome (obrigatória)" });
   if (cols.email === undefined && cols.usuario === undefined) {
     issues.push({ kind: "missing_column", message: "Coluna não encontrada: e-mail ou usuário do Discord (precisa de pelo menos uma)" });
@@ -87,7 +88,13 @@ export function parseSheet(values: unknown[][], opts: { maxTeamSize: number }): 
       issues.push({ kind: "invalid_email", row: rowNumber, message: `Linha ${rowNumber}: e-mail inválido.` });
       email = null;
     }
-    const userRaw = cell(r, "usuario");
+    let userRaw = cell(r, "usuario");
+    // Coluna "usuário" preenchida com e-mail: aproveita como e-mail (check-in pede o e-mail na janela).
+    if (userRaw.includes("@") && isValidEmail(normalizeEmail(userRaw))) {
+      email ??= normalizeEmail(userRaw);
+      emailsInUserColumn++;
+      userRaw = "";
+    }
     let usuario: string | null = userRaw ? normalizeUsername(userRaw) : null;
     if (usuario && !isValidUsername(usuario)) {
       issues.push({ kind: "invalid_username", row: rowNumber, message: `Linha ${rowNumber}: usuário do Discord inválido.` });
@@ -105,6 +112,14 @@ export function parseSheet(values: unknown[][], opts: { maxTeamSize: number }): 
 
     const equipeRaw = cell(r, "equipe");
     rows.push({ row: rowNumber, email, usuario, nome, equipe: equipeRaw || null, equipeKey: teamKey(equipeRaw) });
+  }
+
+  if (emailsInUserColumn > 0) {
+    hasEmailColumn = true;
+    issues.push({
+      kind: "invalid_username",
+      message: `${emailsInUserColumn} linha(s) com e-mail na coluna de usuário: tratadas como e-mail (essas pessoas digitam o e-mail no check-in).`,
+    });
   }
 
   for (const insc of rows) {
