@@ -4,7 +4,7 @@ const pad3 = (n: number) => String(n).padStart(3, "0");
 
 export const en: Messages = {
   locale: "en-US",
-  hackathon: "Smart Women Hackathon",
+  hackathon: "Women in STEM Hackathon",
 
   teamName: (n) => `team-${pad3(n)}`,
   teamLabel: (n) => `Team ${pad3(n)}`,
@@ -43,7 +43,7 @@ export const en: Messages = {
     noTeam: "no team yet (please contact the organizers)",
     ok: (team) => `✅ Check-in confirmed! Your team: ${team}`,
     already: (team) => `You have already checked in. Your team: ${team}`,
-    receiptTitle: "✅ Check-in confirmed — Smart Women Hackathon",
+    receiptTitle: "✅ Check-in confirmed — Women in STEM Hackathon",
     receiptTeam: (team, label) => `Your team: **${team}**${label ? ` (${label})` : ""}`,
     receiptChannel: (id) => `Team channel: <#${id}>`,
     receiptCommands: [
@@ -141,7 +141,7 @@ export const en: Messages = {
   staff: {
     mentor: (member, fila) =>
       [
-        `🎉 **Congratulations, ${member}! Welcome to the Smart Women Hackathon mentor team!**`,
+        `🎉 **Congratulations, ${member}! Welcome to the Women in STEM Hackathon mentor team!**`,
         "",
         "You have received the **Mentor** role and can now see every team's text and voice channels.",
         "",
@@ -155,7 +155,7 @@ export const en: Messages = {
       ].join("\n"),
     organizacao: (member, fila, logs) =>
       [
-        `🎉 **Congratulations, ${member}! Welcome to the Smart Women Hackathon organizing team!**`,
+        `🎉 **Congratulations, ${member}! Welcome to the Women in STEM Hackathon organizing team!**`,
         "",
         "You have received the **Organization** role and can see every team channel, the mentoring queue and the bot logs.",
         "",

@@ -1,4 +1,4 @@
-👩‍💻 **SMART WOMEN HACKATHON**
+👩‍🔬 **WOMEN IN STEM HACKATHON**
 
 🚀 **Hackathon Check-in**
 

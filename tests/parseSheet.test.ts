@@ -80,7 +80,7 @@ describe("parseSheet", () => {
 });
 
 describe("planilha com usuário do Discord", () => {
-  test("só nome + usuário (formato Smart Women)", () => {
+  test("só nome + usuário (formato Women in STEM)", () => {
     const r = parseSheet(
       [
         ["nome", "usuario"],

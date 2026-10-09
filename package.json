@@ -11,10 +11,10 @@
     "discord:check": "bun run src/scripts/discord-check.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "dev:smartwomen": "bun --env-file=.env.smartwomen --watch run src/index.ts",
-    "start:smartwomen": "bun --env-file=.env.smartwomen run src/index.ts",
-    "setup:smartwomen": "bun --env-file=.env.smartwomen run src/scripts/setup.ts",
-    "discord:check:smartwomen": "bun --env-file=.env.smartwomen run src/scripts/discord-check.ts"
+    "dev:womeninstem": "bun --env-file=.env.womeninstem --watch run src/index.ts",
+    "start:womeninstem": "bun --env-file=.env.womeninstem run src/index.ts",
+    "setup:womeninstem": "bun --env-file=.env.womeninstem run src/scripts/setup.ts",
+    "discord:check:womeninstem": "bun --env-file=.env.womeninstem run src/scripts/discord-check.ts"
   },
   "dependencies": {
     "discord.js": "^14.27.0",
