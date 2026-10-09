@@ -24,6 +24,31 @@ export const pt = {
   somethingWrong: "Algo deu errado. A organização foi avisada.",
   staffOnly: "este comando é só para a organização.",
 
+  // !help
+  help: {
+    title: "📋 Comandos do bot",
+    checkin: (channelId: string) =>
+      `**Check-in**\nNo <#${channelId}>, clique em **✅ Fazer check-in** (ou \`!entrar seu-email@exemplo.com\`).`,
+    team: [
+      "**No canal da sua equipe**",
+      "`!desafio` — ver a lista de desafios",
+      "`!desafio <número>` — escolher o desafio da equipe",
+      "`!queromentoria <o que vocês precisam>` — pedir ajuda a um mentor (ou o botão 🙋 **Pedir mentoria**)",
+      "`!queromentoria @mentor <descrição>` — pedir um mentor específico",
+    ].join("\n"),
+    mentor: (filaId: string | null) =>
+      [
+        "**Mentoria** (cargo Mentor)",
+        `Os pedidos chegam em ${filaId ? `<#${filaId}>` : "#fila-mentoria"}: clique em **Atender** e, ao terminar, em **Finalizar mentoria**.`,
+      ].join("\n"),
+    admin: [
+      "**Organização**",
+      "`!criar-equipes` — relê a planilha e cria os canais das equipes que faltam",
+      "Pedidos de mentoria sem atendimento e tudo o que o bot faz aparecem no #bot-logs.",
+    ].join("\n"),
+    other: "`!help` / `!ajuda` — mostra esta lista",
+  },
+
   // Check-in
   checkin: {
     button: "Fazer check-in",

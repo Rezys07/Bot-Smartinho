@@ -9,6 +9,7 @@ import { resolveResources } from "./bot/resources";
 import { handleMessage } from "./commands/router";
 import "./commands/desafio";
 import "./commands/checkinButton";
+import "./commands/help";
 import { createDeclaredTeams } from "./admin/equipes";
 import { handleInteraction } from "./commands/interactions";
 import { startMentoringAlerts, topicMentorIds } from "./mentoring/discord";

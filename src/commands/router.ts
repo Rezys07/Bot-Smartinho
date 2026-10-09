@@ -20,6 +20,9 @@ export const commands = new Map<string, Command>([
   ["checkin", entrarCmd],
 ]);
 
+/** Comandos que participantes também podem usar no #check-in (além do !entrar). */
+const CHECKIN_ALLOWED = new Set(["help", "ajuda", "comandos", "commands"]);
+
 export function registerCommand(names: string[], cmd: Command) {
   for (const n of names) commands.set(n, cmd);
 }
@@ -59,7 +62,8 @@ export async function handleMessage(ctx: BotContext, msg: Message): Promise<void
 
   // #check-in fica limpo: qualquer mensagem de participante que não seja comando é apagada
   // (pode conter e-mail colado sem o !entrar).
-  if (inCheckin && !staff && !(parsed && commands.get(parsed.name) === entrarCmd)) {
+  const allowedInCheckin = parsed && (commands.get(parsed.name) === entrarCmd || CHECKIN_ALLOWED.has(parsed.name));
+  if (inCheckin && !staff && !allowedInCheckin) {
     await msg.delete().catch(() => undefined);
     await sendTemp(msg.channel, `<@${msg.author.id}> ${ctx.t.checkin.onlyCommandHere}`, {
       mention: msg.author.id,

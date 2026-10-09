@@ -23,6 +23,29 @@ export const en: Messages = {
   somethingWrong: "Something went wrong. The organizers have been notified.",
   staffOnly: "this command is for organizers only.",
 
+  help: {
+    title: "📋 Bot commands",
+    checkin: (channelId) => `**Check-in**\nIn <#${channelId}>, click **✅ Check in** (or \`!join your-email@example.com\`).`,
+    team: [
+      "**In your team channel**",
+      "`!challenge` — see the list of challenges",
+      "`!challenge <number>` — choose your team's challenge",
+      "`!mentoring <what you need>` — ask a mentor for help (or the 🙋 **Ask for mentoring** button)",
+      "`!mentoring @mentor <description>` — ask a specific mentor",
+    ].join("\n"),
+    mentor: (filaId) =>
+      [
+        "**Mentoring** (Mentor role)",
+        `Requests arrive in ${filaId ? `<#${filaId}>` : "#mentoring-queue"}: click **Take it** and, when done, **Finish mentoring**.`,
+      ].join("\n"),
+    admin: [
+      "**Organizers**",
+      "`!create-teams` — re-reads the sheet and creates any missing team channels",
+      "Unanswered mentoring requests and everything the bot does show up in #bot-logs.",
+    ].join("\n"),
+    other: "`!help` — shows this list",
+  },
+
   checkin: {
     button: "Check in",
     modalTitle: "Hackathon check-in",
