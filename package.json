@@ -10,7 +10,11 @@
     "sheets:check": "bun run src/scripts/sheets-check.ts",
     "discord:check": "bun run src/scripts/discord-check.ts",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev:smartwomen": "bun --env-file=.env.smartwomen --watch run src/index.ts",
+    "start:smartwomen": "bun --env-file=.env.smartwomen run src/index.ts",
+    "setup:smartwomen": "bun --env-file=.env.smartwomen run src/scripts/setup.ts",
+    "discord:check:smartwomen": "bun --env-file=.env.smartwomen run src/scripts/discord-check.ts"
   },
   "dependencies": {
     "discord.js": "^14.27.0",

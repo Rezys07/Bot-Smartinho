@@ -1,0 +1,20 @@
+{
+  "$comentario": "PLACEHOLDER — replace with the Smart Women Hackathon challenges and restart the bot. 'id' is what teams type (!challenge 1).",
+  "desafios": [
+    {
+      "id": "1",
+      "nome": "Challenge 1",
+      "descricao": "Description of challenge 1."
+    },
+    {
+      "id": "2",
+      "nome": "Challenge 2",
+      "descricao": "Description of challenge 2."
+    },
+    {
+      "id": "3",
+      "nome": "Challenge 3",
+      "descricao": "Description of challenge 3."
+    }
+  ]
+}

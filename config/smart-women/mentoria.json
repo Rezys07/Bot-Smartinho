@@ -1,0 +1,25 @@
+{
+  "$comentario": "Mentoring topics offered to teams. 'mentores' accepts a Discord user ID or the mentor's server name; they are pinged when the topic is chosen. 'Other topic' is added automatically.",
+  "temas": [
+    {
+      "id": "problem",
+      "nome": "Problem validation",
+      "descricao": "Is the problem real? For whom? How to validate it?"
+    },
+    {
+      "id": "canvas",
+      "nome": "Canvas",
+      "descricao": "Business model, value proposition and audience"
+    },
+    {
+      "id": "mvp",
+      "nome": "MVP development",
+      "descricao": "Scope, technology and what to build first"
+    },
+    {
+      "id": "pitch",
+      "nome": "Pitch",
+      "descricao": "Presentation, storytelling and timing"
+    }
+  ]
+}

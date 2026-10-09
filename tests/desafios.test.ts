@@ -53,3 +53,17 @@ describe("canSetDesafio", () => {
     expect(canSetDesafio({ current: "1", next: "1", deadline, now: before, isOrganizacao: false })).toBe("same");
   });
 });
+
+import { readdirSync, existsSync } from "node:fs";
+import { parseTopics } from "../src/mentoring/topics";
+
+describe("todas as pastas de configuração", () => {
+  const dirs = ["config", ...readdirSync("config", { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `config/${d.name}`)];
+  for (const dir of dirs) {
+    test(`${dir} tem desafios, temas e mensagem de check-in válidos`, () => {
+      expect(parseDesafios(JSON.parse(readFileSync(`${dir}/desafios.json`, "utf8"))).length).toBeGreaterThan(0);
+      expect(parseTopics(JSON.parse(readFileSync(`${dir}/mentoria.json`, "utf8"))).length).toBeGreaterThan(1);
+      expect(existsSync(`${dir}/mensagem-checkin.md`)).toBe(true);
+    });
+  }
+});
