@@ -31,6 +31,7 @@ export const REQUIRED_BOT_PERMISSIONS = [
   P.ManageRoles,
   P.ManageNicknames,
   P.ManageMessages,
+  P.PinMessages,
   P.Connect,
   P.Speak,
   P.Stream,

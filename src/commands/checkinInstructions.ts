@@ -1,11 +1,21 @@
 import { readFileSync } from "node:fs";
-import { MessageType } from "discord.js";
+import { type Message, MessageType } from "discord.js";
 import type { BotContext } from "../bot/context";
 import { describeDiscordError } from "../bot/messaging";
 import { logger } from "../logger";
 import { CHECKIN_BUTTON_ID, checkinButtonRow } from "./checkinButton";
 
 const META_KEY = "checkin_instructions_message_id";
+
+/** Fixar exige a permissão "Fixar mensagens"; sem ela a mensagem continua publicada. */
+async function pinOrWarn(ctx: BotContext, msg: Message) {
+  await msg.pin("Instruções de check-in").catch((err) =>
+    ctx.audit(
+      `⚠️ Publiquei as instruções no <#${msg.channelId}>, mas não consegui fixá-las: ${describeDiscordError(err)}. ` +
+        'Ative "Fixar mensagens" no cargo do bot.',
+    ),
+  );
+}
 
 /**
  * Garante a mensagem fixada de instruções no #check-in (idempotente):
@@ -24,13 +34,13 @@ export async function ensureCheckinInstructions(ctx: BotContext, path: string): 
         await existing.edit({ content, components: [checkinButtonRow(ctx.t)], allowedMentions: { parse: [] } });
         logger.info("mensagem de check-in atualizada");
       }
-      if (!existing.pinned) await existing.pin().catch(() => undefined);
+      if (!existing.pinned) await pinOrWarn(ctx, existing);
       return;
     }
 
     const msg = await channel.send({ content, components: [checkinButtonRow(ctx.t)], allowedMentions: { parse: [] } });
     ctx.repo.setMeta(META_KEY, msg.id);
-    await msg.pin("Instruções de check-in");
+    await pinOrWarn(ctx, msg);
     // Remove o aviso "fixou uma mensagem" para o canal ficar limpo.
     const recent = await channel.messages.fetch({ limit: 5 });
     for (const m of recent.values()) {

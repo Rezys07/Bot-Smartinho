@@ -31,7 +31,7 @@ console.log(`  Message Content Intent:  ${has(18) || has(19) ? "ATIVA" : "desati
 console.log(`  Presence Intent:         ${has(12) || has(13) ? "ativa" : "desativada"} (não é necessária)`);
 
 // Permissões que o bot usa (e que ele precisa ter para concedê-las nos canais das equipes).
-const PERMISSIONS = "439479888";
+const PERMISSIONS = "2251800253165136";
 console.log(
   `\nLink de convite: https://discord.com/oauth2/authorize?client_id=${app.body.id}&scope=bot&permissions=${PERMISSIONS}` +
     (guildId ? `&guild_id=${guildId}&disable_guild_select=true` : ""),
