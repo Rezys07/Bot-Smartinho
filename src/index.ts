@@ -18,6 +18,8 @@ import { loadTopics } from "./mentoring/topics";
 import { StaffSync } from "./staff/sync";
 import { ensureCheckinInstructions } from "./commands/checkinInstructions";
 import { GoogleSheetSource } from "./sheets/client";
+import { inscricoesSource } from "./sheets/source";
+import { formatRosterReport } from "./sheets/teamsGrid";
 import { InscricoesStore } from "./sheets/store";
 import { CheckinService } from "./teams/checkin";
 import { DiscordTeamGateway } from "./teams/discordGateway";
@@ -47,7 +49,8 @@ async function main() {
   let stopAlerts: (() => void) | null = null;
   let staff: StaffSync | null = null;
 
-  const store = new InscricoesStore(new GoogleSheetSource(sheetsEnv), {
+  const { source: inscricoes, grid } = inscricoesSource(sheetsEnv);
+  const store = new InscricoesStore(inscricoes, {
     maxTeamSize: env.TEAM_MAX_SIZE,
     refreshMinutes: sheetsEnv.SHEETS_REFRESH_MINUTES,
     logger,
@@ -115,6 +118,20 @@ async function main() {
       };
       const readyCtx = ctx;
       stopAlerts = startMentoringAlerts(readyCtx);
+
+      // Planilha em grade de times: relatório de validação no #bot-logs (na inicialização e quando mudar).
+      if (grid) {
+        let lastReport = "";
+        const reportRoster = async () => {
+          if (!grid.lastReport) return;
+          const text = formatRosterReport(grid.lastReport);
+          if (text === lastReport) return;
+          lastReport = text;
+          await readyCtx.audit(text.slice(0, 1900));
+        };
+        await reportRoster();
+        store.onRefresh(() => void reportRoster());
+      }
       for (const t of topics) {
         const { unresolved } = topicMentorIds(readyCtx, t);
         if (unresolved.length) {

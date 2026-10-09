@@ -3,18 +3,24 @@
  * Uso: bun run sheets:check
  */
 import { loadSheetsEnv } from "../config/env";
-import { GoogleSheetSource } from "../sheets/client";
+import { inscricoesSource } from "../sheets/source";
+import { formatRosterReport } from "../sheets/teamsGrid";
 import { parseSheet } from "../sheets/parse";
 
 const maxTeamSize = Number(process.env.TEAM_MAX_SIZE ?? 5) || 5;
 
 try {
   const env = loadSheetsEnv();
-  const source = new GoogleSheetSource(env);
-  console.log(`Service Account: ${source.serviceAccountEmail}`);
-  console.log(`Lendo a aba "${env.GOOGLE_SHEET_RANGE}"...`);
+  const { source, grid, serviceAccount } = inscricoesSource(env);
+  console.log(`Service Account: ${serviceAccount}`);
+  console.log(
+    env.SHEET_FORMAT === "times"
+      ? `Formato "times": abas "${env.TEAMS_RANGE}" + "${env.DIRECTORY_RANGE}"...`
+      : `Lendo a aba "${env.GOOGLE_SHEET_RANGE}"...`,
+  );
   const values = await source.fetchValues();
   const sheet = parseSheet(values, { maxTeamSize });
+  if (grid?.lastReport) console.log(`\n${formatRosterReport(grid.lastReport)}`);
 
   console.log(`\nCabeçalho: ${JSON.stringify(values[0] ?? [])}`);
   console.log(`Linhas (sem cabeçalho): ${Math.max(0, values.length - 1)}`);

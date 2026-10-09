@@ -32,6 +32,14 @@ const sheetsSchema = z
     // Opção B: JSON inteiro da chave em base64
     GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: pastedValue,
     SHEETS_REFRESH_MINUTES: intWithDefault(5),
+    /**
+     * Formato da planilha de inscrições:
+     * "simples" = uma aba com Nome, E-mail/Usuário, Equipe (GOOGLE_SHEET_RANGE);
+     * "times"   = aba em grade "TEAM 01, TEAM 02…" (TEAMS_RANGE) cruzada pelo nome com as respostas do formulário (DIRECTORY_RANGE).
+     */
+    SHEET_FORMAT: z.enum(["simples", "times"]).default("simples"),
+    TEAMS_RANGE: z.string().trim().min(1).default("Teams"),
+    DIRECTORY_RANGE: z.string().trim().min(1).default("Respostas ao formulário 1"),
     // Planilha de mentores/organização (Nome, usuário, Qual hackathon). Vazio = recurso desligado.
     STAFF_SHEET_ID: pastedValue,
     STAFF_SHEET_RANGE: z.string().trim().min(1).default("Página1"),
