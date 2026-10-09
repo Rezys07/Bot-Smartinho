@@ -51,3 +51,12 @@ describe("parseStaffSheet", () => {
     expect(parseStaffSheet([["Nome"]], { organizacao: [], hackathons: [] }).issues).toHaveLength(1);
   });
 });
+
+describe("nome de exibição não vira usuário", () => {
+  test("espaços internos tornam o valor inválido", async () => {
+    const { isValidUsername } = await import("../src/staff/parse");
+    expect(normalizeUsername("Carla Dias")).toBe("carla dias");
+    expect(isValidUsername(normalizeUsername("Carla Dias"))).toBe(false);
+    expect(normalizeUsername("@ Fulano ")).toBe("fulano");
+  });
+});

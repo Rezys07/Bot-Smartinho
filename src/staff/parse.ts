@@ -21,14 +21,17 @@ export interface ParsedStaff {
   issues: StaffIssue[];
 }
 
-/** "@Fulano#0", " fulano " → "fulano". Usuários do Discord são minúsculos e únicos. */
+/**
+ * "@Fulano#0", " fulano " → "fulano". Usuários do Discord são minúsculos e únicos.
+ * Espaços internos NÃO são removidos: "Carla Dias" é um nome de exibição, não o usuário "carladias"
+ * (removê-los deixaria outra pessoa com esse usuário fazer o check-in no lugar dela).
+ */
 export function normalizeUsername(raw: string): string {
   return raw
     .trim()
-    .replace(/^@/, "")
+    .replace(/^@\s*/, "")
     .replace(/#0+$/, "")
-    .toLowerCase()
-    .replace(/\s+/g, "");
+    .toLowerCase();
 }
 
 /** Usuários do Discord: 2–32 caracteres, letras minúsculas, números, "_" e "." */
