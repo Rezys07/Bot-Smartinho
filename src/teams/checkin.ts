@@ -4,7 +4,7 @@ import type { Inscricao } from "../sheets/types";
 import type { Mutex } from "../util/mutex";
 import type { SlidingWindowLimiter } from "../util/rateLimiter";
 import { chooseTeamForIndividual } from "./allocation";
-import { emailHash } from "./naming";
+import { identityHash } from "./naming";
 import { isValidEmail, normalizeEmail } from "./normalize";
 
 /** Efeitos no Discord ligados à equipe (implementado em discordGateway.ts; falso nos testes). */
@@ -22,6 +22,7 @@ export type CheckinResult =
   | { kind: "rate_limited"; retryAfterMin: number }
   | { kind: "sheet_unavailable" }
   | { kind: "not_found"; attemptsLeft: number }
+  | { kind: "username_not_found" }
   | { kind: "email_taken"; otherDiscordId: string }
   | { kind: "already"; participant: ParticipantRow; team: TeamRow | null; provisionError?: string }
   | { kind: "ok"; participant: ParticipantRow; team: TeamRow; createdTeam: boolean; provisionError?: string };
@@ -50,26 +51,47 @@ export class CheckinService {
     return this.d.mutex.run(async () => {
       const { repo, store } = this.d;
       const existing = repo.participant(discordId);
-      if (existing) {
-        // Idempotente: só reenvia a equipe (e corrige canais/acesso se algo falhou antes).
-        const team = existing.team_number ? repo.team(existing.team_number) : null;
-        const provisionError = team ? await this.provision(team, discordId) : undefined;
-        return { kind: "already", participant: existing, team: team ? repo.team(team.number) : null, provisionError };
-      }
+      // Idempotente: só reenvia a equipe (e corrige canais/acesso se algo falhou antes).
+      if (existing) return this.already(existing, discordId);
 
       const email = normalizeEmail(rawEmail);
       if (!isValidEmail(email)) return { kind: "invalid_email", attemptsLeft: limiter.hit(discordId) };
-
-      const owner = repo.participantByEmailHash(emailHash(email));
-      if (owner) return { kind: "email_taken", otherDiscordId: owner.discord_id };
 
       if (!store.snapshot) return { kind: "sheet_unavailable" };
       const insc = store.findByEmail(email);
       if (!insc) return { kind: "not_found", attemptsLeft: limiter.hit(discordId) };
 
+      const owner = repo.participantByEmailHash(identityHash(insc));
+      if (owner) return { kind: "email_taken", otherDiscordId: owner.discord_id };
+
       limiter.reset(discordId);
       return this.admit(discordId, insc, { forced: false });
     });
+  }
+
+  /**
+   * Check-in pelo usuário do Discord (sem digitar nada). Não conta tentativa: a pessoa não escolhe o usuário,
+   * então não serve para descobrir inscrições alheias.
+   */
+  async checkInByUsername(discordId: string, username: string): Promise<CheckinResult> {
+    return this.d.mutex.run(async () => {
+      const { repo, store } = this.d;
+      const existing = repo.participant(discordId);
+      if (existing) return this.already(existing, discordId);
+      if (!store.snapshot) return { kind: "sheet_unavailable" };
+      const insc = store.findByUsername(username);
+      if (!insc) return { kind: "username_not_found" };
+      const owner = repo.participantByEmailHash(identityHash(insc));
+      if (owner) return { kind: "email_taken", otherDiscordId: owner.discord_id };
+      return this.admit(discordId, insc, { forced: false });
+    });
+  }
+
+  private async already(existing: ParticipantRow, discordId: string): Promise<CheckinResult> {
+    const { repo } = this.d;
+    const team = existing.team_number ? repo.team(existing.team_number) : null;
+    const provisionError = team ? await this.provision(team, discordId) : undefined;
+    return { kind: "already", participant: existing, team: team ? repo.team(team.number) : null, provisionError };
   }
 
   /**
@@ -82,7 +104,7 @@ export class CheckinService {
       const r = this.pickTeam(insc);
       repo.insertParticipant({
         discordId,
-        emailHash: emailHash(insc.email),
+        emailHash: identityHash(insc),
         displayName: insc.nome,
         teamNumber: r.team.number,
         forced: opts.forced,
@@ -129,7 +151,7 @@ export class CheckinService {
   /** Quantas pessoas da planilha dessa equipe ainda não fizeram check-in. */
   pendingDeclared(sheetKey: string | null): number {
     const declared = this.d.store.declaredTeam(sheetKey)?.members ?? [];
-    return declared.filter((m) => !this.d.repo.participantByEmailHash(emailHash(m.email))).length;
+    return declared.filter((m) => !this.d.repo.participantByEmailHash(identityHash(m))).length;
   }
 
   /** Canais + acesso no Discord. Falhas não desfazem o check-in; são reportadas e corrigidas no próximo `!entrar`. */

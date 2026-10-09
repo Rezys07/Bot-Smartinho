@@ -13,7 +13,12 @@ export interface Command {
 }
 
 /** Registro de comandos. Aliases sem acento/hífen apontam para o mesmo comando. */
-export const commands = new Map<string, Command>([["entrar", { run: (ctx, msg, _a, rest) => entrar(ctx, msg, rest) }]]);
+const entrarCmd: Command = { run: (ctx, msg, _a, rest) => entrar(ctx, msg, rest) };
+export const commands = new Map<string, Command>([
+  ["entrar", entrarCmd],
+  ["join", entrarCmd],
+  ["checkin", entrarCmd],
+]);
 
 export function registerCommand(names: string[], cmd: Command) {
   for (const n of names) commands.set(n, cmd);
@@ -42,9 +47,9 @@ export async function handleMessage(ctx: BotContext, msg: Message): Promise<void
 
   // #check-in fica limpo: qualquer mensagem de participante que não seja comando é apagada
   // (pode conter e-mail colado sem o !entrar).
-  if (inCheckin && !staff && parsed?.name !== "entrar") {
+  if (inCheckin && !staff && !(parsed && commands.get(parsed.name) === entrarCmd)) {
     await msg.delete().catch(() => undefined);
-    await sendTemp(msg.channel, `<@${msg.author.id}> neste canal use só: \`!entrar seu-email@exemplo.com\``, {
+    await sendTemp(msg.channel, `<@${msg.author.id}> ${ctx.t.checkin.onlyCommandHere}`, {
       mention: msg.author.id,
       seconds: 15,
     });
@@ -55,7 +60,7 @@ export async function handleMessage(ctx: BotContext, msg: Message): Promise<void
   const cmd = commands.get(parsed.name);
   if (!cmd) return;
   if (cmd.staffOnly && !isOrganizacao(ctx, msg.member)) {
-    await sendTemp(msg.channel, `<@${msg.author.id}> este comando é só para a organização.`, { mention: msg.author.id });
+    await sendTemp(msg.channel, `<@${msg.author.id}> ${ctx.t.staffOnly}`, { mention: msg.author.id });
     return;
   }
 
@@ -64,7 +69,7 @@ export async function handleMessage(ctx: BotContext, msg: Message): Promise<void
   } catch (err) {
     // Não loga o conteúdo da mensagem (pode ter e-mail).
     logger.error({ command: parsed.name, user: msg.author.id, err: describeDiscordError(err) }, "erro no comando");
-    await sendTemp(msg.channel, `<@${msg.author.id}> algo deu errado. A organização foi avisada.`, { mention: msg.author.id });
+    await sendTemp(msg.channel, `<@${msg.author.id}> ${ctx.t.somethingWrong}`, { mention: msg.author.id });
     await ctx.audit(`❗ Erro no comando \`!${parsed.name}\` de <@${msg.author.id}>: ${describeDiscordError(err)}`);
   }
 }

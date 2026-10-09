@@ -4,12 +4,12 @@ import { buildFixture, HEADER } from "./fixtures/inscricoes";
 
 describe("mapHeaders", () => {
   test("encontra as colunas", () => {
-    expect(mapHeaders(HEADER)).toEqual({ cols: { email: 1, equipe: 2, nome: 0 }, missing: [] });
+    expect(mapHeaders(HEADER)).toEqual({ cols: { email: 1, equipe: 2, nome: 0 }, missing: ["usuario"] });
   });
   test("independe da ordem e aceita variações de título", () => {
-    const { cols, missing } = mapHeaders(["Nome da equipe", "Endereço de e-mail", "Nome Completo"]);
+    const { cols, missing } = mapHeaders(["Nome da equipe", "Endereço de e-mail", "Nome Completo", "Nome de usuário"]);
     expect(missing).toEqual([]);
-    expect(cols).toEqual({ equipe: 0, email: 1, nome: 2 });
+    expect(cols).toEqual({ equipe: 0, email: 1, nome: 2, usuario: 3 });
   });
 });
 
@@ -69,12 +69,47 @@ describe("parseSheet", () => {
   test("coluna obrigatória ausente", () => {
     const r = parseSheet([["Nome"], ["Ana"]], { maxTeamSize: 5 });
     expect(r.all).toHaveLength(0);
-    expect(r.issues.map((i) => i.message).join(" ")).toContain("email (obrigatória)");
+    expect(r.issues.map((i) => i.message).join(" ")).toContain("e-mail ou usuário");
   });
 
   test("sem coluna Equipe: todos individuais, com aviso", () => {
     const r = parseSheet([["Nome", "E-mail"], ["Ana", "a@b.test"]], { maxTeamSize: 5 });
     expect(r.all[0]?.equipeKey).toBeNull();
     expect(r.issues[0]?.message).toContain("individuais");
+  });
+});
+
+describe("planilha com usuário do Discord", () => {
+  test("só nome + usuário (formato Smart Women)", () => {
+    const r = parseSheet(
+      [
+        ["nome", "usuario"],
+        ["Ana", "@Ana.Dev"],
+        ["Bia", "bia_01"],
+        ["Inválido", "nome com espaço"],
+        ["Bia de novo", "BIA_01"],
+      ],
+      { maxTeamSize: 5 },
+    );
+    expect(r.hasEmailColumn).toBe(false);
+    expect(r.byUsername.get("ana.dev")?.nome).toBe("Ana");
+    expect(r.byUsername.get("bia_01")?.row).toBe(5);
+    expect(r.all.map((i) => i.row)).toEqual([2, 5]);
+    expect(r.issues.map((i) => i.kind).sort()).toEqual(["duplicate_username", "invalid_username", "missing_column"]);
+  });
+
+  test("e-mail e usuário na mesma planilha (headers em inglês)", () => {
+    const r = parseSheet(
+      [
+        ["Full name", "Email", "Discord username", "Team"],
+        ["Ana", "ana@x.test", "anadev", "Team 3"],
+        ["Bia", "", "bia01", ""],
+      ],
+      { maxTeamSize: 5 },
+    );
+    expect(r.hasEmailColumn).toBe(true);
+    expect(r.byEmail.get("ana@x.test")).toBe(r.byUsername.get("anadev")!);
+    expect(r.byUsername.get("bia01")?.email).toBeNull();
+    expect(r.teams.get("3")?.members).toHaveLength(1);
   });
 });

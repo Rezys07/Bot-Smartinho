@@ -21,14 +21,14 @@ export async function ensureCheckinInstructions(ctx: BotContext, path: string): 
     if (existing) {
       const hasButton = existing.components.some((row) => JSON.stringify(row.toJSON()).includes(CHECKIN_BUTTON_ID));
       if (existing.content !== content || !hasButton) {
-        await existing.edit({ content, components: [checkinButtonRow()], allowedMentions: { parse: [] } });
+        await existing.edit({ content, components: [checkinButtonRow(ctx.t)], allowedMentions: { parse: [] } });
         logger.info("mensagem de check-in atualizada");
       }
       if (!existing.pinned) await existing.pin().catch(() => undefined);
       return;
     }
 
-    const msg = await channel.send({ content, components: [checkinButtonRow()], allowedMentions: { parse: [] } });
+    const msg = await channel.send({ content, components: [checkinButtonRow(ctx.t)], allowedMentions: { parse: [] } });
     ctx.repo.setMeta(META_KEY, msg.id);
     await msg.pin("Instruções de check-in");
     // Remove o aviso "fixou uma mensagem" para o canal ficar limpo.

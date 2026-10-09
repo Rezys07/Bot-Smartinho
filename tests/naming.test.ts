@@ -1,20 +1,26 @@
 import { describe, expect, test } from "bun:test";
-import { buildNickname, categoryIndex, categoryName, emailHash, parseTeamRef, teamName } from "../src/teams/naming";
+import { en } from "../src/i18n/en";
+import { pt } from "../src/i18n/pt";
+import { buildNickname, categoryIndex, categoryRange, emailHash, identityHash, parseTeamRef } from "../src/teams/naming";
 import { Mutex } from "../src/util/mutex";
 import { SlidingWindowLimiter } from "../src/util/rateLimiter";
 
 describe("nomes de equipe e categoria", () => {
-  test("teamName / parseTeamRef", () => {
-    expect(teamName(7)).toBe("equipe-007");
-    for (const v of ["equipe-007", "Equipe 7", "007", "7"]) expect(parseTeamRef(v)).toBe(7);
+  test("nomes por idioma / parseTeamRef", () => {
+    expect(pt.teamName(7)).toBe("equipe-007");
+    expect(en.teamName(7)).toBe("team-007");
+    for (const v of ["equipe-007", "Equipe 7", "team-007", "007", "7"]) expect(parseTeamRef(v)).toBe(7);
     expect(parseTeamRef("abc")).toBeNull();
   });
   test("categorias de 25 em 25", () => {
     expect(categoryIndex(1, 25)).toBe(0);
     expect(categoryIndex(25, 25)).toBe(0);
     expect(categoryIndex(26, 25)).toBe(1);
-    expect(categoryName(0, 25)).toBe("EQUIPES-001-A-025");
-    expect(categoryName(1, 25, true)).toBe("EQUIPES-026-A-050-VOZ");
+    const r0 = categoryRange(0, 25);
+    const r1 = categoryRange(1, 25);
+    expect(pt.categoryName(r0.start, r0.end, false)).toBe("EQUIPES-001-A-025");
+    expect(pt.categoryName(r1.start, r1.end, true)).toBe("EQUIPES-026-A-050-VOZ");
+    expect(en.categoryName(r1.start, r1.end, true)).toBe("TEAMS-026-TO-050-VOICE");
   });
 });
 
@@ -22,6 +28,7 @@ describe("buildNickname", () => {
   test("nome curto + número", () => {
     expect(buildNickname("maria clara da silva santos", 7)).toBe("Maria Santos | 007");
     expect(buildNickname("Ana", null)).toBe("Ana");
+    expect(buildNickname("", 3, "Participant")).toBe("Participant | 003");
   });
   test("nunca passa de 32 caracteres", () => {
     const n = buildNickname("Maximiliana Albuquerquenostradamus Wolfeschlegelsteinhausen", 123);
@@ -34,6 +41,10 @@ describe("emailHash", () => {
   test("mesmo hash para grafias diferentes do mesmo e-mail", () => {
     expect(emailHash(" A@B.com ")).toBe(emailHash("a@b.com"));
     expect(emailHash("a@b.com")).not.toContain("@");
+  });
+  test("identidade: e-mail quando existe, senão usuário", () => {
+    expect(identityHash({ email: "a@b.com", usuario: "ana" })).toBe(emailHash("a@b.com"));
+    expect(identityHash({ email: null, usuario: "ana" })).not.toBe(identityHash({ email: null, usuario: "bia" }));
   });
 });
 

@@ -20,19 +20,24 @@ import { InscricoesStore } from "./sheets/store";
 import { CheckinService } from "./teams/checkin";
 import { DiscordTeamGateway } from "./teams/discordGateway";
 import { loadDesafios } from "./teams/desafios";
+import { messages } from "./i18n";
+import { join } from "node:path";
 import { Mutex } from "./util/mutex";
 import { SlidingWindowLimiter } from "./util/rateLimiter";
 
-/** Arquivos editáveis pela organização (relativos à pasta do projeto). */
-const CONFIG = {
-  desafios: "config/desafios.json",
-  mensagemCheckin: "config/mensagem-checkin.md",
-  mentoria: "config/mentoria.json",
-};
+/** Arquivos editáveis pela organização, dentro de CONFIG_DIR (um por servidor). */
+const configFiles = (dir: string) => ({
+  desafios: join(dir, "desafios.json"),
+  mensagemCheckin: join(dir, "mensagem-checkin.md"),
+  mentoria: join(dir, "mentoria.json"),
+});
 
 async function main() {
   const env = loadBotEnv();
   const sheetsEnv = loadSheetsEnv();
+  const t = messages(env.BOT_LANGUAGE);
+  const CONFIG = configFiles(env.CONFIG_DIR);
+  logger.info({ idioma: env.BOT_LANGUAGE, config: env.CONFIG_DIR, banco: env.DATABASE_PATH }, "configuração");
   const repo = new Repo(openDatabase(env.DATABASE_PATH));
   const desafios = loadDesafios(CONFIG.desafios);
   const topics = loadTopics(CONFIG.mentoria);
@@ -73,13 +78,14 @@ async function main() {
       await guild.members.fetchMe();
       // Cache completo de membros: necessário para achar mentores por nome (temas de mentoria).
       await guild.members.fetch();
-      const resources = await resolveResources(guild, env);
+      const resources = await resolveResources(guild, env, t.defaults);
       const gateway = new DiscordTeamGateway(
         guild,
         repo,
         resources.roles,
         env.TEAMS_PER_CATEGORY,
         (id) => desafios.find((d) => d.id === id)?.nome ?? id,
+        t,
       );
       const checkin = new CheckinService({
         repo,
@@ -103,6 +109,7 @@ async function main() {
         mentoring,
         topics,
         audit: makeAudit(resources.channels.botLogs),
+        t,
       };
       const readyCtx = ctx;
       stopAlerts = startMentoringAlerts(readyCtx);

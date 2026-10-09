@@ -2,13 +2,12 @@ import { EmbedBuilder, type Message } from "discord.js";
 import { isOrganizacao, type BotContext } from "../bot/context";
 import { describeDiscordError, sendTemp } from "../bot/messaging";
 import { canSetDesafio, formatDeadline, resolveDesafio } from "../teams/desafios";
-import { teamName } from "../teams/naming";
 import { registerCommand } from "./router";
 
 function listEmbed(ctx: BotContext, currentId: string | null) {
   const prazo = ctx.env.DESAFIO_PRAZO;
   return new EmbedBuilder()
-    .setTitle("Desafios")
+    .setTitle(ctx.t.desafio.title)
     .setColor(0x1971c2)
     .setDescription(
       ctx.desafios
@@ -16,9 +15,7 @@ function listEmbed(ctx: BotContext, currentId: string | null) {
         .join("\n\n"),
     )
     .setFooter({
-      text:
-        "Escolha com !desafio <número>." +
-        (prazo ? ` Trocas permitidas até ${formatDeadline(prazo)}.` : ""),
+      text: ctx.t.desafio.footer(prazo ? formatDeadline(prazo, ctx.t.locale) : null),
     });
 }
 
@@ -27,12 +24,12 @@ async function desafio(ctx: BotContext, msg: Message<true>, rest: string) {
   const team = ctx.repo.teamByChannel(msg.channelId);
   const staff = isOrganizacao(ctx, msg.member);
   if (!team || team.text_channel_id !== msg.channelId) {
-    await sendTemp(msg.channel, `<@${msg.author.id}> use \`!desafio\` no canal de texto da sua equipe.`, { mention: msg.author.id });
+    await sendTemp(msg.channel, `<@${msg.author.id}> ${ctx.t.desafio.useTeamChannel}`, { mention: msg.author.id });
     return;
   }
   const participant = ctx.repo.participant(msg.author.id);
   if (!staff && participant?.team_number !== team.number) {
-    await sendTemp(msg.channel, `<@${msg.author.id}> só membros da equipe podem escolher o desafio.`, { mention: msg.author.id });
+    await sendTemp(msg.channel, `<@${msg.author.id}> ${ctx.t.desafio.membersOnly}`, { mention: msg.author.id });
     return;
   }
 
@@ -44,7 +41,7 @@ async function desafio(ctx: BotContext, msg: Message<true>, rest: string) {
   const chosen = resolveDesafio(ctx.desafios, rest);
   if (!chosen) {
     await msg.reply({
-      content: "Não reconheci essa opção. Veja a lista:",
+      content: ctx.t.desafio.unknown,
       embeds: [listEmbed(ctx, team.desafio)],
       allowedMentions: { repliedUser: false },
     });
@@ -59,12 +56,12 @@ async function desafio(ctx: BotContext, msg: Message<true>, rest: string) {
     isOrganizacao: staff,
   });
   if (decision === "same") {
-    await msg.reply({ content: `A equipe já está no desafio **${chosen.nome}**.`, allowedMentions: { repliedUser: false } });
+    await msg.reply({ content: ctx.t.desafio.same(chosen.nome), allowedMentions: { repliedUser: false } });
     return;
   }
   if (decision === "deadline_passed") {
     await msg.reply({
-      content: `O prazo para trocar de desafio terminou em ${formatDeadline(ctx.env.DESAFIO_PRAZO!)}. Fale com a organização se precisar.`,
+      content: ctx.t.desafio.deadlinePassed(formatDeadline(ctx.env.DESAFIO_PRAZO!, ctx.t.locale)),
       allowedMentions: { repliedUser: false },
     });
     return;
@@ -73,18 +70,16 @@ async function desafio(ctx: BotContext, msg: Message<true>, rest: string) {
   const previous = team.desafio ? ctx.desafios.find((d) => d.id === team.desafio)?.nome ?? team.desafio : null;
   ctx.repo.setDesafio(team.number, chosen.id);
   await msg.reply({
-    content: previous
-      ? `🔄 Desafio alterado de **${previous}** para **${chosen.nome}**.`
-      : `🎯 Desafio escolhido: **${chosen.nome}**. Bom trabalho!`,
+    content: previous ? ctx.t.desafio.changed(previous, chosen.nome) : ctx.t.desafio.chosen(chosen.nome),
     allowedMentions: { repliedUser: false },
   });
   await ctx.audit(
-    `🎯 **${teamName(team.number)}**: desafio ${previous ? `alterado de "${previous}" para` : "escolhido:"} "${chosen.nome}" por <@${msg.author.id}>.`,
+    `🎯 **${ctx.t.teamName(team.number)}**: desafio ${previous ? `alterado de "${previous}" para` : "escolhido:"} "${chosen.nome}" por <@${msg.author.id}>.`,
   );
   // Não bloqueia a resposta: o Discord pode segurar a edição do tópico por alguns minutos.
   void ctx.gateway.refreshTopic(ctx.repo.team(team.number)!).catch((err) =>
-    ctx.audit(`❗ Não consegui atualizar o tópico de ${teamName(team.number)}: ${describeDiscordError(err)}`),
+    ctx.audit(`❗ Não consegui atualizar o tópico de ${ctx.t.teamName(team.number)}: ${describeDiscordError(err)}`),
   );
 }
 
-registerCommand(["desafio", "desafios"], { run: (ctx, msg, _args, rest) => desafio(ctx, msg, rest) });
+registerCommand(["desafio", "desafios", "challenge", "challenges"], { run: (ctx, msg, _args, rest) => desafio(ctx, msg, rest) });

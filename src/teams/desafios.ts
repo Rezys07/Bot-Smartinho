@@ -65,6 +65,6 @@ export function canSetDesafio(opts: {
   return "allowed";
 }
 
-export function formatDeadline(d: Date): string {
-  return d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" });
+export function formatDeadline(d: Date, locale = "pt-BR"): string {
+  return d.toLocaleString(locale, { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" });
 }

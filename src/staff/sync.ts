@@ -9,35 +9,11 @@ import { normalizeUsername, parseStaffSheet, type ParsedStaff, type StaffEntry, 
 const ROLE_LABEL: Record<StaffRole, string> = { mentor: "Mentor", organizacao: "Organização" };
 
 function welcomeEmbed(ctx: BotContext, member: GuildMember, entry: StaffEntry): EmbedBuilder {
-  const fila = ctx.channels.filaMentoria ? `<#${ctx.channels.filaMentoria.id}>` : "#fila-mentoria";
-  const logs = ctx.channels.botLogs ? `<#${ctx.channels.botLogs.id}>` : "#bot-logs";
-  const lines =
-    entry.role === "mentor"
-      ? [
-          `🎉 **Parabéns, ${member}! Boas-vindas à equipe de mentores do Hackathon Cidades Inteligentes!**`,
-          "",
-          "Você recebeu o cargo **Mentor** e já tem acesso aos canais de texto e de voz de todas as equipes.",
-          "",
-          "**Como funciona a mentoria**",
-          `• Os pedidos das equipes chegam em ${fila}, com tema e descrição.`,
-          "• Clique em **Atender** para assumir um pedido — a equipe é avisada na hora.",
-          "• Ao terminar, clique em **Finalizar mentoria**.",
-          "• Se uma equipe pedir você pelo nome, você será mencionado(a) na fila.",
-          "",
-          "Obrigado por fazer parte! 💡🏆",
-        ]
-      : [
-          `🎉 **Parabéns, ${member}! Boas-vindas à Organização do Hackathon Cidades Inteligentes!**`,
-          "",
-          "Você recebeu o cargo **Organização** e tem acesso a todos os canais das equipes, à fila de mentoria e aos registros do bot.",
-          "",
-          `• ${logs}: tudo o que o bot faz (check-ins, equipes, mentorias, alertas).`,
-          `• ${fila}: pedidos de mentoria das equipes.`,
-          "• Comandos de organização (`!status`, `!equipes`, `!mover`, `!sync`…) funcionam em qualquer canal.",
-          "",
-          "Bom evento! 🚀",
-        ];
-  return new EmbedBuilder().setColor(entry.role === "mentor" ? 0x2b8a3e : 0x7048e8).setDescription(lines.join("\n"));
+  const fila = ctx.channels.filaMentoria ? `<#${ctx.channels.filaMentoria.id}>` : `#${ctx.t.defaults.filaMentoria}`;
+  const logs = ctx.channels.botLogs ? `<#${ctx.channels.botLogs.id}>` : `#${ctx.t.defaults.botLogs}`;
+  const text =
+    entry.role === "mentor" ? ctx.t.staff.mentor(`${member}`, fila) : ctx.t.staff.organizacao(`${member}`, fila, logs);
+  return new EmbedBuilder().setColor(entry.role === "mentor" ? 0x2b8a3e : 0x7048e8).setDescription(text);
 }
 
 /**

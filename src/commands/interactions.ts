@@ -48,7 +48,7 @@ export async function handleInteraction(ctx: BotContext, i: Interaction): Promis
   } catch (err) {
     logger.error({ customId: i.customId, user: i.user.id, err: describeDiscordError(err) }, "erro na interação");
     await ctx.audit(`❗ Erro na interação \`${key}\` de <@${i.user.id}>: ${describeDiscordError(err)}`);
-    const content = "Algo deu errado. A organização foi avisada.";
+    const content = ctx.t.somethingWrong;
     if (i.deferred || i.replied) await i.editReply({ content }).catch(() => undefined);
     else await i.reply({ content, flags: MessageFlags.Ephemeral }).catch(() => undefined);
   }

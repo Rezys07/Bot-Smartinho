@@ -158,3 +158,35 @@ describe("CheckinService", () => {
     expect((await s.checkIn("u1", "a@b.test")).kind).toBe("sheet_unavailable");
   });
 });
+
+describe("check-in pelo usuário do Discord", () => {
+  const rows = [
+    ["Nome", "E-mail", "Usuário", "Equipe"],
+    ["Ana Lima", "ana@x.test", "anadev", "7"],
+    ["Bia Souza", "", "bia01", "7"],
+  ];
+
+  test("entra pelo usuário, sem e-mail", async () => {
+    const { service } = await setup(rows);
+    const r = await service.checkInByUsername("u1", "BIA01");
+    expect(r.kind).toBe("ok");
+  });
+
+  test("usuário fora da planilha não conta tentativa", async () => {
+    const { service } = await setup(rows);
+    for (let i = 0; i < 5; i++) expect((await service.checkInByUsername("u9", "ninguem")).kind).toBe("username_not_found");
+    expect((await service.checkIn("u9", "ana@x.test")).kind).toBe("ok");
+  });
+
+  test("mesma inscrição por e-mail e por usuário não pode ser usada por duas contas", async () => {
+    const { service } = await setup(rows);
+    expect((await service.checkIn("u1", "ana@x.test")).kind).toBe("ok");
+    expect(await service.checkInByUsername("u2", "anadev")).toEqual({ kind: "email_taken", otherDiscordId: "u1" });
+  });
+
+  test("quem já fez check-in recebe a equipe de novo", async () => {
+    const { service } = await setup(rows);
+    await service.checkInByUsername("u1", "anadev");
+    expect((await service.checkInByUsername("u1", "outro")).kind).toBe("already");
+  });
+});

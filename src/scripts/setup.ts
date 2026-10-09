@@ -15,7 +15,8 @@ import {
   type TextChannel,
 } from "discord.js";
 import { loadBotEnv } from "../config/env";
-import { findRole, findTextChannel, looseName, RESOURCE_NAMES } from "../bot/resources";
+import { findRole, findTextChannel, looseName } from "../bot/resources";
+import { messages } from "../i18n";
 import { describeDiscordError } from "../bot/messaging";
 
 /** Permissões que o bot precisa no servidor (mesmas do link de convite). */
@@ -39,6 +40,7 @@ export const REQUIRED_BOT_PERMISSIONS = [
 const BOT_CATEGORY = "BOT HACKATHON";
 
 const env = loadBotEnv();
+const RESOURCE_NAMES = messages(env.BOT_LANGUAGE).defaults;
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const done: string[] = [];
 const warnings: string[] = [];

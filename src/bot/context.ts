@@ -1,6 +1,7 @@
 import { PermissionFlagsBits, type Client, type Guild, type GuildMember } from "discord.js";
 import type { BotEnv } from "../config/env";
 import type { Repo } from "../db/repo";
+import type { Messages } from "../i18n";
 import type { MentoringRequests } from "../mentoring/requests";
 import type { Topic } from "../mentoring/topics";
 import type { InscricoesStore } from "../sheets/store";
@@ -22,6 +23,8 @@ export interface BotContext extends Resources {
   mentoring: MentoringRequests;
   topics: Topic[];
   audit: Audit;
+  /** Textos no idioma do servidor. */
+  t: Messages;
 }
 
 export function isOrganizacao(ctx: BotContext, member: GuildMember | null): boolean {

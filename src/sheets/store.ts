@@ -1,4 +1,5 @@
 import type { Logger } from "../logger";
+import { normalizeUsername } from "../staff/parse";
 import { normalizeEmail } from "../teams/normalize";
 import type { SheetSource } from "./client";
 import { parseSheet } from "./parse";
@@ -74,6 +75,10 @@ export class InscricoesStore {
 
   findByEmail(rawEmail: string): Inscricao | undefined {
     return this.current?.sheet.byEmail.get(normalizeEmail(rawEmail));
+  }
+
+  findByUsername(rawUsername: string): Inscricao | undefined {
+    return this.current?.sheet.byUsername.get(normalizeUsername(rawUsername));
   }
 
   declaredTeam(key: string | null): DeclaredTeam | undefined {

@@ -76,6 +76,10 @@ const botSchema = z.object({
   CHECKIN_MAX_TENTATIVAS: intWithDefault(5),
   CHECKIN_JANELA_MINUTOS: intWithDefault(15),
   DATABASE_PATH: z.string().trim().min(1).default("./data/bot.sqlite"),
+  /** Idioma do que participantes/mentores veem ("pt" ou "en"). O #bot-logs fica em português. */
+  BOT_LANGUAGE: z.enum(["pt", "en"]).default("pt"),
+  /** Pasta com desafios.json, mentoria.json e mensagem-checkin.md deste servidor. */
+  CONFIG_DIR: z.string().trim().min(1).default("config"),
   /** Usuários do Discord (da planilha de staff) que recebem Organização; os demais recebem Mentor. */
   ORGANIZACAO_USUARIOS: z
     .string()

@@ -15,7 +15,9 @@ import { logger } from "../logger";
 import { looseName } from "../bot/resources";
 import type { TeamGateway } from "./checkin";
 import { mentoriaButtonRow } from "../mentoring/discord";
-import { categoryIndex, categoryName, teamName } from "./naming";
+import type { Messages } from "../i18n";
+import { pt } from "../i18n/pt";
+import { categoryIndex, categoryRange } from "./naming";
 
 const MEMBER_ALLOW = {
   ViewChannel: true,
@@ -33,11 +35,8 @@ const MEMBER_ALLOW = {
 const STAFF_ALLOW = [P.ViewChannel, P.SendMessages, P.ReadMessageHistory, P.AttachFiles, P.EmbedLinks, P.Connect, P.Speak, P.Stream, P.UseVAD];
 const BOT_ALLOW = [P.ViewChannel, P.SendMessages, P.ReadMessageHistory, P.EmbedLinks, P.ManageChannels, P.ManageRoles, P.ManageMessages, P.Connect];
 
-export function teamTopic(team: TeamRow, desafioNome?: string | null): string {
-  const parts = [`Equipe ${String(team.number).padStart(3, "0")}`];
-  if (team.sheet_label) parts.push(`Nome na inscrição: ${team.sheet_label}`);
-  parts.push(`Desafio: ${desafioNome ?? team.desafio ?? "não escolhido (use !desafio)"}`);
-  return parts.join(" · ");
+export function teamTopic(team: TeamRow, desafioNome?: string | null, t: Messages = pt): string {
+  return t.team.topic(t.teamLabel(team.number), team.sheet_label, desafioNome ?? team.desafio);
 }
 
 /** Cria/atualiza categorias e canais privados das equipes no Discord. */
@@ -49,6 +48,7 @@ export class DiscordTeamGateway implements TeamGateway {
     private readonly perCategory: number,
     /** id do desafio → nome, para o tópico do canal. */
     private readonly desafioNome: (id: string | null) => string | null = () => null,
+    private readonly t: Messages = pt,
   ) {}
 
   private baseOverwrites(): OverwriteResolvable[] {
@@ -79,7 +79,8 @@ export class DiscordTeamGateway implements TeamGateway {
     let cat = await this.getChannel<CategoryChannel>(savedId);
 
     if (!cat) {
-      const name = categoryName(idx, this.perCategory, voice);
+      const { start, end } = categoryRange(idx, this.perCategory);
+      const name = this.t.categoryName(start, end, voice);
       cat =
         (this.guild.channels.cache.find(
           (c) => c.type === ChannelType.GuildCategory && looseName(c.name) === looseName(name),
@@ -100,7 +101,7 @@ export class DiscordTeamGateway implements TeamGateway {
   }
 
   async ensureTeamChannels(team: TeamRow): Promise<TeamRow> {
-    const name = teamName(team.number);
+    const name = this.t.teamName(team.number);
     let text = await this.getChannel<TextChannel>(team.text_channel_id);
     let voice = await this.getChannel<VoiceChannel>(team.voice_channel_id);
     let createdText = false;
@@ -110,7 +111,7 @@ export class DiscordTeamGateway implements TeamGateway {
         name,
         type: ChannelType.GuildText,
         parent: await this.ensureCategory(team.number, false),
-        topic: teamTopic(team, this.desafioNome(team.desafio)),
+        topic: teamTopic(team, this.desafioNome(team.desafio), this.t),
         permissionOverwrites: this.baseOverwrites(),
         reason: `Canal da ${name}`,
       });
@@ -134,22 +135,10 @@ export class DiscordTeamGateway implements TeamGateway {
 
   private async sendWelcome(channel: TextChannel, team: TeamRow) {
     const embed = new EmbedBuilder()
-      .setTitle(`Bem-vindos à ${teamName(team.number)}!`)
+      .setTitle(this.t.team.welcomeTitle(this.t.teamName(team.number)))
       .setColor(0x2b8a3e)
-      .setDescription(
-        [
-          team.sheet_label ? `Equipe da inscrição: **${team.sheet_label}**` : null,
-          "Este canal e o canal de voz com o mesmo nome são privados da equipe (mentores e organização também têm acesso).",
-          "",
-          "**Comandos**",
-          "`!desafio` — lista os desafios; `!desafio <opção>` escolhe o da equipe",
-          "`!queromentoria <o que vocês precisam>` — pede ajuda a um mentor (ou use o botão abaixo)",
-          "`!queromentoria @mentor <descrição>` — pede um mentor específico",
-        ]
-          .filter((l) => l !== null)
-          .join("\n"),
-      );
-    const msg = await channel.send({ embeds: [embed], components: [mentoriaButtonRow()] });
+      .setDescription(this.t.team.welcomeBody(team.sheet_label));
+    const msg = await channel.send({ embeds: [embed], components: [mentoriaButtonRow(this.t)] });
     await msg.pin().catch(() => undefined);
   }
 
@@ -162,7 +151,7 @@ export class DiscordTeamGateway implements TeamGateway {
       voice?.permissionOverwrites.edit(discordId, MEMBER_ALLOW, { reason: "Membro da equipe" }),
     ]);
     if (text && isNew) {
-      await text.send({ content: `👋 <@${discordId}> entrou na equipe!`, allowedMentions: { users: [discordId] } });
+      await text.send({ content: this.t.team.joined(discordId), allowedMentions: { users: [discordId] } });
     }
   }
 
@@ -179,6 +168,6 @@ export class DiscordTeamGateway implements TeamGateway {
   async refreshTopic(team: TeamRow): Promise<void> {
     const text = await this.getChannel<TextChannel>(team.text_channel_id);
     // O Discord limita edições de nome/tópico a 2 a cada 10 min por canal; o discord.js enfileira.
-    await text?.setTopic(teamTopic(team, this.desafioNome(team.desafio)));
+    await text?.setTopic(teamTopic(team, this.desafioNome(team.desafio), this.t));
   }
 }
