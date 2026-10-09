@@ -62,6 +62,7 @@ export const en: Messages = {
       `I couldn't find your Discord username (**${username}**) in the registration list. Please contact the organizers to check your registration.`,
     rateLimited: (min) => `Too many attempts. Try again in ${min} min or contact the organizers.`,
     sheetUnavailable: "The registration list is unavailable right now. Please try again in a few minutes.",
+    staffNoCheckin: "You are part of the staff (Mentor/Organization), so you don't need to check in. You can already see every team channel.",
     taken: "This registration has already been used by another Discord account. The organizers have been notified and will contact you.",
     noTeam: "no team yet (please contact the organizers)",
     ok: (team) => `✅ Check-in confirmed! Your team: ${team}`,

@@ -66,6 +66,7 @@ export const pt = {
       `Não encontrei seu usuário do Discord (**${username}**) na lista de inscritos. Fale com a organização para conferir sua inscrição.`,
     rateLimited: (min: number) => `Muitas tentativas. Tente de novo em ${min} min ou procure a organização.`,
     sheetUnavailable: "A lista de inscritos está indisponível agora. Tente de novo em alguns minutos.",
+    staffNoCheckin: "Você faz parte da staff (Mentor/Organização) e não precisa fazer check-in. Você já vê os canais das equipes.",
     taken: "Essa inscrição já foi usada por outra conta do Discord. A organização foi avisada e vai falar com você.",
     noTeam: "nenhuma equipe ainda (fale com a organização)",
     ok: (team: string) => `✅ Check-in confirmado! Sua equipe: ${team}`,

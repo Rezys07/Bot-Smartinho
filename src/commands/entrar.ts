@@ -1,5 +1,5 @@
 import { EmbedBuilder, type GuildMember, type Message } from "discord.js";
-import { type BotContext } from "../bot/context";
+import { isMentor, isOrganizacao, type BotContext } from "../bot/context";
 import { describeDiscordError, sendTemp } from "../bot/messaging";
 import { logger } from "../logger";
 import type { ParticipantRow, TeamRow } from "../db/repo";
@@ -109,13 +109,25 @@ async function finishCheckin(ctx: BotContext, userId: string, r: CheckinResult, 
   }
 }
 
+/** Staff não faz check-in: não ocupa vaga em equipe e já vê todos os canais pelo cargo. */
+async function staffReply(ctx: BotContext, userId: string): Promise<CheckinReply | null> {
+  if (ctx.repo.participant(userId)) return null; // já registrado antes: deixa seguir (idempotente)
+  const member = await ctx.guild.members.fetch(userId).catch(() => null);
+  if (member && (isMentor(ctx, member) || isOrganizacao(ctx, member))) return { ok: false, text: ctx.t.checkin.staffNoCheckin };
+  return null;
+}
+
 /** Check-in por e-mail. */
 export async function runCheckin(ctx: BotContext, userId: string, email: string, how: CheckinMethod): Promise<CheckinReply> {
+  const staff = await staffReply(ctx, userId);
+  if (staff) return staff;
   return finishCheckin(ctx, userId, await ctx.checkin.checkIn(userId, email), how);
 }
 
 /** Check-in pelo usuário do Discord (sem digitar nada). */
 export async function runCheckinByUsername(ctx: BotContext, userId: string, username: string, how: CheckinMethod): Promise<CheckinReply> {
+  const staff = await staffReply(ctx, userId);
+  if (staff) return staff;
   return finishCheckin(ctx, userId, await ctx.checkin.checkInByUsername(userId, username), how);
 }
 

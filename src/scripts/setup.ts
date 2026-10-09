@@ -156,6 +156,23 @@ client.once(Events.ClientReady, async (ready) => {
       "Espaço de mentores e organização. O bot dá as boas-vindas aqui.",
     );
 
+    // Cargo de participante não deve moderar ninguém.
+    const risky = new PermissionsBitField([
+      P.Administrator, P.ManageGuild, P.ManageRoles, P.ManageChannels, P.ManageMessages, P.MuteMembers,
+      P.DeafenMembers, P.MoveMembers, P.MentionEveryone, P.KickMembers, P.BanMembers, P.ModerateMembers, P.ManageThreads,
+    ]);
+    // Interseção dos bits (has() trataria "Administrador" como "tem tudo").
+    const riskyHeld = new PermissionsBitField(participante.permissions.bitfield & risky.bitfield).toArray();
+    if (riskyHeld.length) {
+      warnings.push(`O cargo "${participante.name}" tem permissões de moderação: ${riskyHeld.join(", ")}. Participantes não deveriam ter.`);
+    } else {
+      done.push(`cargo "${participante.name}" sem permissões de moderação`);
+    }
+    // Mentores precisam ver a fila para atender.
+    if (!fila.permissionsFor(mentor).has(P.ViewChannel)) {
+      warnings.push(`O cargo "${mentor.name}" não vê #${fila.name}: mentores não conseguirão atender pedidos.`);
+    }
+
     // 4. Hierarquia: para dar Mentor/Organização automaticamente, o bot precisa estar acima deles
     for (const r of [mentor, organizacao]) {
       if (me.roles.highest.comparePositionTo(r) <= 0) {
