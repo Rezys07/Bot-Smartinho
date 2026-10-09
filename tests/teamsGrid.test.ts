@@ -108,3 +108,24 @@ describe("TeamsGridSource", () => {
     expect(src.lastReport?.matched).toBe(6);
   });
 });
+
+describe("pequenas diferenças de grafia", () => {
+  test("1 letra a menos no sobrenome ainda valida, com aviso", () => {
+    const teams = [["TEAM 01:"], ["Gabi Luiza Marque"]];
+    const form = [["Full Name", "Email Address", "Discord username and tag"], ["Gabi Luiza Marques", "g@x.test", "gabim"]];
+    const { values, report } = buildRoster(parseTeamsGrid(teams), form);
+    expect(values).toHaveLength(2);
+    expect(report.approximate).toEqual([{ team: "TEAM 01", name: "Gabi Luiza Marque", formName: "Gabi Luiza Marques" }]);
+  });
+  test("nome exato tem prioridade sobre o aproximado", () => {
+    const teams = [["TEAM 01:"], ["Ana Souza"]];
+    const form = [["Full Name", "Discord username and tag"], ["Ana Sousa", "ana1"], ["Ana Souza", "ana2"]];
+    const { values, report } = buildRoster(parseTeamsGrid(teams), form);
+    expect(values[1]![2]).toBe("ana2");
+    expect(report.approximate).toEqual([]);
+  });
+  test("palavras curtas não têm tolerância", () => {
+    const { report } = buildRoster(parseTeamsGrid([["TEAM 01:"], ["Ana Lia"]]), [["Full Name"], ["Ana Lis"]]);
+    expect(report.notFound).toHaveLength(1);
+  });
+});

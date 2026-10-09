@@ -83,18 +83,41 @@ export function parseDirectory(values: unknown[][]): DirectoryEntry[] {
  * Quão bem o nome do time bate com o nome do formulário:
  * 3 = igual; 2 = mesmo primeiro nome e demais palavras contidas, na ordem; 1 = só o primeiro nome.
  */
-export function nameMatchLevel(team: string[], directory: string[]): 0 | 1 | 2 | 3 {
-  if (!team.length || !directory.length || team[0] !== directory[0]) return 0;
-  if (team.length === directory.length && team.every((t, i) => t === directory[i])) return 3;
+export function nameMatchLevel(team: string[], directory: string[], same: (a: string, b: string) => boolean = (a, b) => a === b): 0 | 1 | 2 | 3 {
+  if (!team.length || !directory.length || !same(team[0]!, directory[0]!)) return 0;
+  if (team.length === directory.length && team.every((t, i) => same(t, directory[i]!))) return 3;
   if (team.length === 1) return 1;
   let j = 1;
   for (let i = 1; i < team.length; i++) {
-    while (j < directory.length && directory[j] !== team[i]) j++;
+    while (j < directory.length && !same(directory[j]!, team[i]!)) j++;
     if (j >= directory.length) return 0;
     j++;
   }
   return 2;
 }
+
+/** Distância de edição com corte: para cedo quando passa de `max`. */
+export function editDistance(a: string, b: string, max: number): number {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    let rowMin = i;
+    for (let j = 1; j <= b.length; j++) {
+      const v = Math.min(prev[j]! + 1, cur[j - 1]! + 1, prev[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1));
+      cur.push(v);
+      rowMin = Math.min(rowMin, v);
+    }
+    if (rowMin > max) return max + 1;
+    prev = cur;
+  }
+  return prev[b.length]!;
+}
+
+/** Tolera 1 letra de diferença em palavras de 5+ letras ("Marque" × "Marques"). */
+export const similarToken = (a: string, b: string) =>
+  a === b || (Math.min(a.length, b.length) >= 5 && editDistance(a, b, 1) <= 1);
 
 export interface RosterReport {
   teams: number;
@@ -102,6 +125,8 @@ export interface RosterReport {
   matched: number;
   /** Encontradas só pelo primeiro nome (vale conferir). */
   firstNameOnly: { team: string; name: string }[];
+  /** Encontradas com pequena diferença de grafia (1 letra): vale corrigir a planilha. */
+  approximate: { team: string; name: string; formName: string }[];
   /** Nome do time não encontrado no formulário: essa pessoa não consegue fazer check-in. */
   notFound: { team: string; name: string }[];
   /** Nome bate com mais de uma pessoa do formulário: não validado. */
@@ -114,7 +139,7 @@ export interface RosterReport {
 export function buildRoster(teams: GridTeam[], directoryValues: unknown[][]): { values: string[][]; report: RosterReport } {
   const directory = parseDirectory(directoryValues);
   const values: string[][] = [["Nome", "E-mail", "Usuário", "Equipe"]];
-  const report: RosterReport = { teams: teams.length, members: 0, matched: 0, firstNameOnly: [], notFound: [], ambiguous: [], inTwoTeams: [] };
+  const report: RosterReport = { teams: teams.length, members: 0, matched: 0, firstNameOnly: [], approximate: [], notFound: [], ambiguous: [], inTwoTeams: [] };
   /** pessoa do formulário → times em que ela foi encontrada (e a linha gerada) */
   const assigned = new Map<string, { teams: string[]; row: string[]; name: string }>();
 
@@ -124,13 +149,20 @@ export function buildRoster(teams: GridTeam[], directoryValues: unknown[][]): { 
       const tokens = nameTokens(member.name);
       let best = 0;
       let candidates: DirectoryEntry[] = [];
-      for (const d of directory) {
-        const level = nameMatchLevel(tokens, d.tokens);
-        if (level > best) {
-          best = level;
-          candidates = [d];
-        } else if (level === best && level > 0) {
-          candidates.push(d);
+      let approximate = false;
+      for (const fuzzy of [false, true]) {
+        for (const d of directory) {
+          const level = nameMatchLevel(tokens, d.tokens, fuzzy ? similarToken : undefined);
+          if (level > best) {
+            best = level;
+            candidates = [d];
+          } else if (level === best && level > 0) {
+            candidates.push(d);
+          }
+        }
+        if (best > 0) {
+          approximate = fuzzy;
+          break;
         }
       }
       // A mesma pessoa pode ter respondido o formulário mais de uma vez: conta como uma só (vale a última).
@@ -154,6 +186,7 @@ export function buildRoster(teams: GridTeam[], directoryValues: unknown[][]): { 
         continue;
       }
       if (best === 1) report.firstNameOnly.push({ team: team.label, name: member.name });
+      if (approximate) report.approximate.push({ team: team.label, name: member.name, formName: hit.nome });
       const row = [hit.nome, hit.email, hit.usuario, team.label];
       assigned.set(key, { teams: [team.label], row, name: member.name });
       values.push(row);
@@ -201,6 +234,10 @@ export function formatRosterReport(r: RosterReport): string {
   if (r.inTwoTeams.length) {
     lines.push(`❗ Pessoa em mais de um time (não validada até corrigir a planilha):`);
     for (const p of r.inTwoTeams) lines.push(`• ${p.name}: ${p.teams.join(" e ")}`);
+  }
+  if (r.approximate.length) {
+    lines.push(`⚠️ Nome com pequena diferença entre Teams e formulário (validadas; vale corrigir):`);
+    for (const p of r.approximate) lines.push(`• ${p.team}: "${p.name}" ≈ "${p.formName}"`);
   }
   if (r.firstNameOnly.length) {
     lines.push(`⚠️ Encontradas só pelo primeiro nome (confira):`);
