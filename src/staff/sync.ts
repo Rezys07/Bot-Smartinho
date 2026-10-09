@@ -58,7 +58,43 @@ export class StaffSync {
   }
 
   private wasGranted(id: string): boolean {
-    return !!this.db.query("SELECT 1 FROM staff_grants WHERE discord_id = ?").get(id);
+    return this.grantedRole(id) !== null;
+  }
+
+  /** Cargo de staff que o bot gerencia para essa pessoa (o último que ele aplicou). */
+  private grantedRole(id: string): StaffRole | null {
+    const row = this.db.query<{ role: StaffRole }, [string]>("SELECT role FROM staff_grants WHERE discord_id = ?").get(id);
+    return row?.role ?? null;
+  }
+
+  private roleFor(kind: StaffRole) {
+    return kind === "organizacao" ? this.ctx.roles.organizacao : this.ctx.roles.mentor;
+  }
+
+  /**
+   * A pessoa mudou de papel na configuração (ex.: Organização → Mentor): tira o cargo antigo
+   * que o próprio bot tinha dado. Cargos dados à mão, fora da planilha, nunca são removidos.
+   */
+  private async removeOutdatedRole(member: GuildMember, entry: StaffEntry) {
+    const previous = this.grantedRole(member.id);
+    if (!previous || previous === entry.role) return;
+    const old = this.roleFor(previous);
+    if (member.roles.cache.has(old.id)) {
+      try {
+        await member.roles.remove(old, `Planilha de staff: agora é ${ROLE_LABEL[entry.role]}`);
+        await this.ctx.audit(
+          `🔁 <@${member.id}> deixou de ser **${ROLE_LABEL[previous]}** e passa a ser **${ROLE_LABEL[entry.role]}** (configuração da staff).`,
+        );
+      } catch (err) {
+        const key = `rm:${member.id}:${old.id}`;
+        if (!this.reportedFailures.has(key)) {
+          this.reportedFailures.add(key);
+          await this.ctx.audit(`❗ Não consegui remover o cargo ${ROLE_LABEL[previous]} de <@${member.id}>: ${describeDiscordError(err)}.`);
+        }
+        return;
+      }
+    }
+    this.recordGrant(member.id, entry.role);
   }
 
   private recordGrant(id: string, role: StaffRole) {
@@ -73,10 +109,12 @@ export class StaffSync {
     const entry = this.current?.byUsername.get(normalizeUsername(member.user.username));
     if (!entry) return false;
 
-    const role = entry.role === "organizacao" ? this.ctx.roles.organizacao : this.ctx.roles.mentor;
+    await this.removeOutdatedRole(member, entry);
+
+    const role = this.roleFor(entry.role);
     if (member.roles.cache.has(role.id)) {
       // Já tinha o cargo (dado à mão, por exemplo): só registra para não dar boas-vindas depois.
-      if (!this.wasGranted(member.id)) this.recordGrant(member.id, entry.role);
+      if (this.grantedRole(member.id) !== entry.role) this.recordGrant(member.id, entry.role);
       return false;
     }
 
