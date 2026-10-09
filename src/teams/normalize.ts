@@ -32,6 +32,12 @@ export function normalizeName(raw: string): string {
 /** Partículas que não ajudam a identificar a pessoa ("Maria DA Silva"). */
 const PARTICLES = new Set(["da", "de", "do", "das", "dos", "e", "d", "di", "du", "del", "van", "von"]);
 
+/** "Maria da Conceição dos Santos" → ["maria", "conceicao", "santos"] (para comparar nomes). */
+export function nameTokens(raw: string): string[] {
+  const norm = normalizeName(raw);
+  return norm ? norm.split(" ").filter((t) => !PARTICLES.has(t)) : [];
+}
+
 /** "Maria Clara da Silva Santos" → "Maria Santos" (para apelido). */
 export function shortName(raw: string): string {
   const parts = raw.trim().split(/\s+/).filter(Boolean);
