@@ -57,11 +57,19 @@ async function ensureRole(guild: Guild, id: string | undefined, name: string): P
   return role;
 }
 
-async function ensureCategory(guild: Guild, overwrites: OverwriteResolvable[]): Promise<string> {
+async function ensureCategory(guild: Guild, overwrites: OverwriteResolvable[]): Promise<string | null> {
   const existing = guild.channels.cache.find(
     (c) => c.type === ChannelType.GuildCategory && looseName(c.name) === looseName(BOT_CATEGORY),
   );
-  if (existing) return existing.id;
+  if (existing) {
+    // Categoria criada à mão sem acesso para o bot: cria o canal fora dela em vez de falhar.
+    if (existing.permissionsFor(guild.members.me!)?.has([P.ViewChannel, P.ManageChannels])) return existing.id;
+    warnings.push(
+      `O bot não tem acesso à categoria "${existing.name}". Dê a ele "Ver canais" e "Gerenciar canais" nela ` +
+        "(Editar categoria → Permissões → adicionar o cargo do bot). Canais novos foram criados fora dela.",
+    );
+    return null;
+  }
   done.push(`categoria "${BOT_CATEGORY}" CRIADA`);
   return (await guild.channels.create({ name: BOT_CATEGORY, type: ChannelType.GuildCategory, permissionOverwrites: overwrites })).id;
 }
@@ -76,6 +84,13 @@ async function ensurePrivateChannel(
   const found = findTextChannel(guild, id, name);
   if (found) {
     done.push(`canal #${found.name} já existe`);
+    const botPerms = found.permissionsFor(guild.members.me!);
+    if (!botPerms?.has([P.ViewChannel, P.SendMessages, P.EmbedLinks])) {
+      warnings.push(
+        `O bot não consegue ver/escrever em #${found.name}. Em Editar canal (ou na categoria dele) → Permissões, ` +
+          `adicione o cargo "${guild.members.me!.roles.botRole?.name ?? "do bot"}" com Ver canal, Enviar mensagens e Inserir links.`,
+      );
+    }
     if (found.permissionsFor(guild.roles.everyone).has(P.ViewChannel)) {
       warnings.push(`#${found.name} está visível para @everyone — deveria ser privado.`);
     }
