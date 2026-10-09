@@ -17,5 +17,6 @@ Se preferir, também pode digitar:
 `!desafio <número>` — escolher o desafio da equipe
 `!queromentoria <o que vocês precisam>` — pedir ajuda a um mentor
 `!queromentoria @mentor <descrição>` — pedir um mentor específico
+`!help` — ver todos os comandos
 
 Boa sorte e bom Hackathon! 💡🏆

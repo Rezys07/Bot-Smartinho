@@ -14,5 +14,6 @@ You are already registered for the event! To confirm your attendance, click the 
 `!challenge <number>` — choose your team's challenge
 `!mentoring <what you need>` — ask a mentor for help
 `!mentoring @mentor <description>` — ask a specific mentor
+`!help` — see all commands
 
 Good luck and enjoy the Hackathon! 💡🏆
