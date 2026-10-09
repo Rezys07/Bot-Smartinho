@@ -67,3 +67,15 @@ describe("todas as pastas de configuração", () => {
     });
   }
 });
+
+describe("lista de desafios cabe no embed do Discord", () => {
+  const dirs = ["config", ...readdirSync("config", { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `config/${d.name}`)];
+  for (const dir of dirs) {
+    test(`${dir}: descrição do embed < 4096 caracteres`, () => {
+      const list = parseDesafios(JSON.parse(readFileSync(`${dir}/desafios.json`, "utf8")));
+      // Mesmo formato de src/commands/desafio.ts (listEmbed)
+      const text = list.map((d) => `✅ **${d.id}. ${d.nome}**${d.descricao ? `\n${d.descricao}` : ""}`).join("\n\n");
+      expect(text.length).toBeLessThan(4096);
+    });
+  }
+});

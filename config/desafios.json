@@ -1,20 +1,65 @@
 {
-  "$comentario": "Desafios do hackathon. 'id' é o que a equipe digita (!desafio 1). Edite e reinicie o bot.",
+  "$comentario": "Desafios do hackathon (12, por eixo). 'id' é o que a equipe digita (!desafio 1). Edite e reinicie o bot.",
   "desafios": [
     {
       "id": "1",
-      "nome": "Mobilidade Urbana",
-      "descricao": "Soluções para deslocamento, transporte público, trânsito e acessibilidade na cidade."
+      "nome": "Saúde — Filas de consultas e exames",
+      "descricao": "Reduzir as filas de espera por consultas médicas e exames."
     },
     {
       "id": "2",
-      "nome": "Sustentabilidade e Meio Ambiente",
-      "descricao": "Soluções para energia, resíduos, água e qualidade ambiental urbana."
+      "nome": "Tecnologia e Inovação — Transparência pública",
+      "descricao": "Aumentar a transparência da gestão pública e facilitar o acesso à informação para os cidadãos."
     },
     {
       "id": "3",
-      "nome": "Serviços Públicos Digitais",
-      "descricao": "Soluções que aproximam cidadãos e governo: atendimento, dados abertos e participação."
+      "nome": "Tecnologia e Inovação — Participação popular",
+      "descricao": "Promover a participação da população na tomada de decisões públicas."
+    },
+    {
+      "id": "4",
+      "nome": "Segurança Pública — Engajamento e comunicação",
+      "descricao": "Promover canais de comunicação claros e acessíveis para informar a população sobre os benefícios e os riscos das tecnologias de segurança pública, fomentando a participação ativa da comunidade no processo decisório."
+    },
+    {
+      "id": "5",
+      "nome": "Meio Ambiente — Resíduos e reciclagem",
+      "descricao": "Desenvolver soluções para otimizar a coleta de resíduos, reduzir a quantidade de lixo enviado para aterros sanitários, promover a reciclagem e o reaproveitamento de materiais, e educar os cidadãos sobre práticas sustentáveis de gestão de resíduos."
+    },
+    {
+      "id": "6",
+      "nome": "Meio Ambiente — Emergências e desastres naturais",
+      "descricao": "Criar sistemas e tecnologias para melhorar a capacidade de resposta a emergências e desastres naturais na cidade, incluindo sistemas de comunicação de emergência, mapeamento de áreas de risco e coordenação de equipes de resgate."
+    },
+    {
+      "id": "7",
+      "nome": "Meio Ambiente — Consumo de água",
+      "descricao": "Monitorar e gerenciar o consumo de água na cidade para evitar o desperdício."
+    },
+    {
+      "id": "8",
+      "nome": "Mobilidade — Acessibilidade",
+      "descricao": "Criar soluções para melhorar a acessibilidade de pessoas com mobilidade reduzida, incluindo o desenvolvimento de calçadas acessíveis, transporte público adaptado e aplicativos de mobilidade sob demanda para pessoas com deficiência."
+    },
+    {
+      "id": "9",
+      "nome": "Mobilidade — Transporte público em tempo real",
+      "descricao": "Desenvolver sistemas de rastreamento em tempo real de ativos de transporte público, como ônibus e trens, para melhorar a precisão dos horários de chegada, reduzir o tempo de espera dos passageiros e otimizar a operação dos serviços de transporte."
+    },
+    {
+      "id": "10",
+      "nome": "Mobilidade — Segurança de ciclistas e pedestres",
+      "descricao": "Garantir a segurança dos ciclistas e pedestres no trânsito."
+    },
+    {
+      "id": "11",
+      "nome": "Energia — Eficiência energética",
+      "descricao": "Propor soluções para melhorar a eficiência energética em edifícios públicos, residenciais e comerciais, incluindo a instalação de isolamento térmico, janelas eficientes, sistemas de iluminação LED e sistemas de controle de temperatura inteligentes."
+    },
+    {
+      "id": "12",
+      "nome": "Educação — Aprendizado personalizado",
+      "descricao": "Criar soluções para oferecer experiências de aprendizado personalizadas, adaptadas às necessidades individuais de cada aluno, por meio de algoritmos de aprendizado de máquina e análise de dados educacionais."
     }
   ]
 }

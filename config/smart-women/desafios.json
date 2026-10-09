@@ -1,20 +1,65 @@
 {
-  "$comentario": "PLACEHOLDER — replace with the Smart Women Hackathon challenges and restart the bot. 'id' is what teams type (!challenge 1).",
+  "$comentario": "Hackathon challenges (12, by area). 'id' is what teams type (!challenge 1). Edit and restart the bot.",
   "desafios": [
     {
       "id": "1",
-      "nome": "Challenge 1",
-      "descricao": "Description of challenge 1."
+      "nome": "Health — Waiting lists for appointments and tests",
+      "descricao": "Reduce waiting lists for medical appointments and exams."
     },
     {
       "id": "2",
-      "nome": "Challenge 2",
-      "descricao": "Description of challenge 2."
+      "nome": "Technology & Innovation — Public transparency",
+      "descricao": "Increase transparency in public administration and make it easier for citizens to access information."
     },
     {
       "id": "3",
-      "nome": "Challenge 3",
-      "descricao": "Description of challenge 3."
+      "nome": "Technology & Innovation — Civic participation",
+      "descricao": "Encourage citizens to take part in public decision-making."
+    },
+    {
+      "id": "4",
+      "nome": "Public Safety — Community engagement and communication",
+      "descricao": "Create clear and accessible communication channels to inform citizens about the benefits and risks of public safety technologies, encouraging the community to take an active part in decision-making."
+    },
+    {
+      "id": "5",
+      "nome": "Environment — Waste and recycling",
+      "descricao": "Develop solutions to optimize waste collection, reduce the amount of waste sent to landfills, promote recycling and reuse of materials, and educate citizens about sustainable waste management practices."
+    },
+    {
+      "id": "6",
+      "nome": "Environment — Emergencies and natural disasters",
+      "descricao": "Build systems and technologies that improve the city's ability to respond to emergencies and natural disasters, including emergency communication systems, mapping of risk areas and coordination of rescue teams."
+    },
+    {
+      "id": "7",
+      "nome": "Environment — Water consumption",
+      "descricao": "Monitor and manage water consumption in the city to prevent waste."
+    },
+    {
+      "id": "8",
+      "nome": "Mobility — Accessibility",
+      "descricao": "Create solutions that improve accessibility for people with reduced mobility, including accessible sidewalks, adapted public transportation and on-demand mobility apps for people with disabilities."
+    },
+    {
+      "id": "9",
+      "nome": "Mobility — Real-time public transportation",
+      "descricao": "Develop real-time tracking systems for public transportation assets, such as buses and trains, to improve arrival time accuracy, reduce passenger waiting times and optimize transportation operations."
+    },
+    {
+      "id": "10",
+      "nome": "Mobility — Cyclist and pedestrian safety",
+      "descricao": "Ensure the safety of cyclists and pedestrians in traffic."
+    },
+    {
+      "id": "11",
+      "nome": "Energy — Energy efficiency",
+      "descricao": "Propose solutions to improve energy efficiency in public, residential and commercial buildings, including thermal insulation, efficient windows, LED lighting and smart temperature control systems."
+    },
+    {
+      "id": "12",
+      "nome": "Education — Personalized learning",
+      "descricao": "Create solutions that offer personalized learning experiences, adapted to each student's individual needs, using machine learning algorithms and educational data analysis."
     }
   ]
 }
