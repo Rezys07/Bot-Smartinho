@@ -1,4 +1,4 @@
-import type { Message } from "discord.js";
+import { type Message, MessageType } from "discord.js";
 import { isMentor, isOrganizacao, type BotContext } from "../bot/context";
 import { describeDiscordError, sendTemp } from "../bot/messaging";
 import { logger } from "../logger";
@@ -39,7 +39,19 @@ export function parseCommand(content: string): { name: string; args: string[]; r
 }
 
 export async function handleMessage(ctx: BotContext, msg: Message): Promise<void> {
-  if (msg.author.bot || !msg.inGuild() || msg.guildId !== ctx.guild.id) return;
+  if (!msg.inGuild() || msg.guildId !== ctx.guild.id) return;
+
+  // Aviso automático "Fulano entrou no servidor": apaga após alguns segundos, sem resposta.
+  if (msg.type === MessageType.UserJoin) {
+    const seconds = ctx.env.APAGAR_AVISO_ENTRADA_SEGUNDOS;
+    if (seconds > 0) {
+      setTimeout(() => {
+        void msg.delete().catch((err) => logger.warn({ err: describeDiscordError(err) }, "não apaguei aviso de entrada"));
+      }, seconds * 1000);
+    }
+    return;
+  }
+  if (msg.author.bot) return;
 
   const parsed = parseCommand(msg.content);
   const inCheckin = msg.channelId === ctx.channels.checkin.id;

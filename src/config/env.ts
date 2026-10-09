@@ -73,6 +73,8 @@ const botSchema = z.object({
       return d;
     }),
   MENTORIA_ALERTA_MINUTOS: intWithDefault(15),
+  /** Segundos até apagar o aviso automático "Fulano entrou no servidor" (0 = não apagar). */
+  APAGAR_AVISO_ENTRADA_SEGUNDOS: intWithDefault(5, 0),
   CHECKIN_MAX_TENTATIVAS: intWithDefault(5),
   CHECKIN_JANELA_MINUTOS: intWithDefault(15),
   DATABASE_PATH: z.string().trim().min(1).default("./data/bot.sqlite"),
