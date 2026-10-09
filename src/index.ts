@@ -13,6 +13,7 @@ import { handleInteraction } from "./commands/interactions";
 import { startMentoringAlerts, topicMentorIds } from "./mentoring/discord";
 import { MentoringRequests } from "./mentoring/requests";
 import { loadTopics } from "./mentoring/topics";
+import { StaffSync } from "./staff/sync";
 import { ensureCheckinInstructions } from "./commands/checkinInstructions";
 import { GoogleSheetSource } from "./sheets/client";
 import { InscricoesStore } from "./sheets/store";
@@ -37,6 +38,7 @@ async function main() {
   const topics = loadTopics(CONFIG.mentoria);
   const mentoring = new MentoringRequests(repo.db);
   let stopAlerts: (() => void) | null = null;
+  let staff: StaffSync | null = null;
 
   const store = new InscricoesStore(new GoogleSheetSource(sheetsEnv), {
     maxTeamSize: env.TEAM_MAX_SIZE,
@@ -114,6 +116,24 @@ async function main() {
       }
       if (!resources.channels.botLogs) logger.warn("canal #bot-logs não encontrado; registros só no log do processo");
       await ensureCheckinInstructions(readyCtx, CONFIG.mensagemCheckin);
+
+      // Mentores e organização pela planilha de staff (sem check-in).
+      if (sheetsEnv.STAFF_SHEET_ID) {
+        staff = new StaffSync(
+          readyCtx,
+          new GoogleSheetSource(sheetsEnv, { sheetId: sheetsEnv.STAFF_SHEET_ID, range: sheetsEnv.STAFF_SHEET_RANGE }),
+          repo.db,
+        );
+        if (await staff.refresh()) {
+          const granted = await staff.reconcileAll();
+          logger.info({ staff: staff.size, cargosDados: granted }, "staff sincronizada");
+        } else {
+          await readyCtx.audit("❗ Não consegui ler a planilha de mentores (STAFF_SHEET_ID). Compartilhe-a com a Service Account.");
+        }
+        staff.start(sheetsEnv.SHEETS_REFRESH_MINUTES);
+      } else {
+        logger.warn("STAFF_SHEET_ID vazio: cargos automáticos de mentor/organização desligados");
+      }
       logger.info({ user: ready.user.tag, guild: guild.name, desafios: desafios.length }, "bot pronto");
       await ctx.audit(
         `🤖 Bot iniciado. Inscrições carregadas: ${store.snapshot?.sheet.all.length ?? "planilha indisponível"}.`,
@@ -130,6 +150,11 @@ async function main() {
     void handleMessage(ctx, msg).catch((err) => logger.error({ err: describeDiscordError(err) }, "erro ao tratar mensagem"));
   });
 
+  client.on(Events.GuildMemberAdd, (member) => {
+    if (!ctx || !staff || member.guild.id !== ctx.guild.id) return;
+    void staff.apply(member).catch((err) => logger.error({ err: describeDiscordError(err) }, "erro ao aplicar cargo de staff"));
+  });
+
   client.on(Events.InteractionCreate, (i) => {
     if (!ctx) return;
     void handleInteraction(ctx, i).catch((err) => logger.error({ err: describeDiscordError(err) }, "erro ao tratar interação"));
@@ -139,6 +164,7 @@ async function main() {
     logger.info("encerrando");
     store.stop();
     stopAlerts?.();
+    staff?.stop();
     await client.destroy().catch(() => undefined);
     repo.db.close();
     process.exit(code);

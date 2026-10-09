@@ -59,7 +59,13 @@ export class GoogleSheetSource implements SheetSource {
   private readonly jwt: JWT;
   readonly serviceAccountEmail: string;
 
-  constructor(private readonly env: SheetsEnv) {
+  private readonly sheetId: string;
+  private readonly range: string;
+
+  /** Por padrão lê a planilha de inscrições; `target` permite ler outra (ex.: staff). */
+  constructor(env: SheetsEnv, target?: { sheetId: string; range: string }) {
+    this.sheetId = target?.sheetId ?? env.GOOGLE_SHEET_ID;
+    this.range = target?.range ?? env.GOOGLE_SHEET_RANGE;
     const key = resolveKey(env);
     this.serviceAccountEmail = key.client_email;
     this.jwt = new JWT({
@@ -71,8 +77,8 @@ export class GoogleSheetSource implements SheetSource {
 
   async fetchValues(): Promise<unknown[][]> {
     const url =
-      `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(this.env.GOOGLE_SHEET_ID)}` +
-      `/values/${encodeURIComponent(this.env.GOOGLE_SHEET_RANGE)}?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE`;
+      `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(this.sheetId)}` +
+      `/values/${encodeURIComponent(this.range)}?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE`;
 
     return withRetry(
       async () => {

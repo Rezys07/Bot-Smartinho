@@ -58,6 +58,13 @@ const MIGRATIONS: string[] = [
   CREATE UNIQUE INDEX mentoring_one_active_per_team
     ON mentoring_requests(team_number) WHERE status IN ('aberta', 'em_atendimento');
   `,
+  `
+  CREATE TABLE staff_grants (
+    discord_id TEXT PRIMARY KEY,
+    role TEXT NOT NULL,                         -- mentor | organizacao
+    granted_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  `,
 ];
 
 export function openDatabase(path: string): Database {

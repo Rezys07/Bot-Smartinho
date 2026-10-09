@@ -130,7 +130,25 @@ client.once(Events.ClientReady, async (ready) => {
       "Pedidos de mentoria das equipes. Clique em Atender para assumir.",
     );
 
-    // 4. #check-in: bot precisa apagar mensagens (e-mails) lá
+    const sala = await ensurePrivateChannel(
+      guild,
+      undefined,
+      RESOURCE_NAMES.salaMentores,
+      [everyoneDeny, botAllow, { id: organizacao.id, allow: read }, { id: mentor.id, allow: read }],
+      "Espaço de mentores e organização. O bot dá as boas-vindas aqui.",
+    );
+
+    // 4. Hierarquia: para dar Mentor/Organização automaticamente, o bot precisa estar acima deles
+    for (const r of [mentor, organizacao]) {
+      if (me.roles.highest.comparePositionTo(r) <= 0) {
+        warnings.push(
+          `O cargo mais alto do bot ("${me.roles.highest.name}") não está ACIMA de "${r.name}" — ele não conseguirá dar esse cargo pela planilha de mentores. ` +
+            `Arraste o cargo "${me.roles.botRole?.name ?? "do bot"}" para o topo da lista em Configurações do servidor → Cargos.`,
+        );
+      }
+    }
+
+    // 5. #check-in: bot precisa apagar mensagens (e-mails) lá
     const checkin = findTextChannel(guild, env.CHANNEL_CHECKIN_ID, RESOURCE_NAMES.checkin);
     if (!checkin) {
       warnings.push("Canal #check-in não encontrado. Crie um canal com 'check-in' no nome ou defina CHANNEL_CHECKIN_ID.");
@@ -155,6 +173,7 @@ client.once(Events.ClientReady, async (ready) => {
     if (checkin) console.log(`  CHANNEL_CHECKIN_ID=${checkin.id}`);
     console.log(`  CHANNEL_FILA_MENTORIA_ID=${fila.id}`);
     console.log(`  CHANNEL_BOT_LOGS_ID=${logs.id}`);
+    console.log(`  (sala dos mentores: #${sala.name})`);
     await client.destroy();
     process.exit(warnings.length ? 2 : 0);
   } catch (err) {

@@ -32,6 +32,9 @@ const sheetsSchema = z
     // Opção B: JSON inteiro da chave em base64
     GOOGLE_SERVICE_ACCOUNT_JSON_BASE64: pastedValue,
     SHEETS_REFRESH_MINUTES: intWithDefault(5),
+    // Planilha de mentores/organização (Nome, usuário, Qual hackathon). Vazio = recurso desligado.
+    STAFF_SHEET_ID: pastedValue,
+    STAFF_SHEET_RANGE: z.string().trim().min(1).default("Página1"),
   })
   .refine(
     (e) => e.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64 || (e.GOOGLE_SERVICE_ACCOUNT_EMAIL && e.GOOGLE_PRIVATE_KEY),
@@ -73,6 +76,16 @@ const botSchema = z.object({
   CHECKIN_MAX_TENTATIVAS: intWithDefault(5),
   CHECKIN_JANELA_MINUTOS: intWithDefault(15),
   DATABASE_PATH: z.string().trim().min(1).default("./data/bot.sqlite"),
+  /** Usuários do Discord (da planilha de staff) que recebem Organização; os demais recebem Mentor. */
+  ORGANIZACAO_USUARIOS: z
+    .string()
+    .optional()
+    .transform((v) => (v ?? "").split(/[,;\s]+/).map((u) => u.trim()).filter(Boolean)),
+  /** Valores aceitos em "Qual hackathon" (vazio = todos). Ex.: "Cidades inteligentes,Os dois". */
+  STAFF_HACKATHONS: z
+    .string()
+    .optional()
+    .transform((v) => (v ?? "").split(",").map((u) => u.trim()).filter(Boolean)),
 });
 
 export type SheetsEnv = z.infer<typeof sheetsSchema>;

@@ -9,6 +9,7 @@ export const RESOURCE_NAMES = {
   checkin: "check-in",
   filaMentoria: "fila-mentoria",
   botLogs: "bot-logs",
+  salaMentores: "sala-dos-mentores",
 } as const;
 
 /** Compara ignorando acentos, caixa, emojis e separadores: "✅┃Check-in" ≈ "check-in". */
@@ -21,7 +22,13 @@ export const looseName = (s: string) =>
 
 export interface Resources {
   roles: { participante: Role; mentor: Role; organizacao: Role };
-  channels: { checkin: TextChannel; filaMentoria: TextChannel | null; botLogs: TextChannel | null };
+  channels: {
+    checkin: TextChannel;
+    filaMentoria: TextChannel | null;
+    botLogs: TextChannel | null;
+    /** Só Mentor e Organização veem; recebe as boas-vindas da staff. */
+    salaMentores: TextChannel | null;
+  };
 }
 
 export function findRole(guild: Guild, id: string | undefined, name: string): Role | null {
@@ -61,6 +68,7 @@ export async function resolveResources(guild: Guild, env: BotEnv): Promise<Resou
       checkin: checkin!,
       filaMentoria: findTextChannel(guild, env.CHANNEL_FILA_MENTORIA_ID, RESOURCE_NAMES.filaMentoria),
       botLogs: findTextChannel(guild, env.CHANNEL_BOT_LOGS_ID, RESOURCE_NAMES.botLogs),
+      salaMentores: findTextChannel(guild, undefined, RESOURCE_NAMES.salaMentores),
     },
   };
 }
