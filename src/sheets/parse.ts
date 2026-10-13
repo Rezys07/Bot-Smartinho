@@ -77,6 +77,8 @@ export function parseSheet(values: unknown[][], opts: { maxTeamSize: number }): 
 
   // Primeiro coleta as linhas; e-mail/usuário repetidos: vale a última linha.
   const rows: Inscricao[] = [];
+  /** E-mail extra de uma linha (ex.: e-mail colocado na coluna de usuário além da coluna de e-mail). */
+  const altEmail = new Map<Inscricao, string>();
   for (let i = 1; i < values.length; i++) {
     const r = values[i] ?? [];
     const rowNumber = i + 1;
@@ -90,8 +92,12 @@ export function parseSheet(values: unknown[][], opts: { maxTeamSize: number }): 
     }
     let userRaw = cell(r, "usuario");
     // Coluna "usuário" preenchida com e-mail: aproveita como e-mail (check-in pede o e-mail na janela).
+    // Se a linha já tem e-mail, esse vira um segundo e-mail aceito para a mesma pessoa.
+    let extraEmail: string | null = null;
     if (userRaw.includes("@") && isValidEmail(normalizeEmail(userRaw))) {
-      email ??= normalizeEmail(userRaw);
+      const fromUser = normalizeEmail(userRaw);
+      if (!email) email = fromUser;
+      else if (fromUser !== email) extraEmail = fromUser;
       emailsInUserColumn++;
       userRaw = "";
     }
@@ -111,7 +117,9 @@ export function parseSheet(values: unknown[][], opts: { maxTeamSize: number }): 
     if (!nome) issues.push({ kind: "missing_name", row: rowNumber, message: `Linha ${rowNumber}: nome vazio.` });
 
     const equipeRaw = cell(r, "equipe");
-    rows.push({ row: rowNumber, email, usuario, nome, equipe: equipeRaw || null, equipeKey: teamKey(equipeRaw) });
+    const insc: Inscricao = { row: rowNumber, email, usuario, nome, equipe: equipeRaw || null, equipeKey: teamKey(equipeRaw) };
+    rows.push(insc);
+    if (extraEmail) altEmail.set(insc, extraEmail);
   }
 
   if (emailsInUserColumn > 0) {
@@ -147,6 +155,11 @@ export function parseSheet(values: unknown[][], opts: { maxTeamSize: number }): 
       }
       byUsername.set(insc.usuario, insc);
     }
+  }
+
+  // E-mails extras só valem se não forem o e-mail principal de outra pessoa (a identidade continua sendo o principal).
+  for (const [insc, alt] of altEmail) {
+    if (!byEmail.has(alt) && insc.email && byEmail.get(insc.email) === insc) byEmail.set(alt, insc);
   }
 
   const all = [...new Set([...byEmail.values(), ...byUsername.values()])].sort((a, b) => a.row - b.row);

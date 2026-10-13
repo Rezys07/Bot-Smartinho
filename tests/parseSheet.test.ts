@@ -133,3 +133,31 @@ describe("e-mail na coluna de usuário", () => {
     for (const i of r.issues) expect(i.message).not.toContain("@");
   });
 });
+
+describe("segundo e-mail na coluna de usuário", () => {
+  test("os dois e-mails levam à mesma inscrição", () => {
+    const r = parseSheet(
+      [
+        ["nome", "email", "usuario", "equipe"],
+        ["Erin", "erin@uni.test", "erin.pessoal@mail.test", "1"],
+        ["Fran", "fran@uni.test", "fran01", "1"],
+      ],
+      { maxTeamSize: 5 },
+    );
+    expect(r.byEmail.get("erin@uni.test")?.nome).toBe("Erin");
+    expect(r.byEmail.get("erin.pessoal@mail.test")).toBe(r.byEmail.get("erin@uni.test")!);
+    expect(r.byEmail.get("erin.pessoal@mail.test")?.email).toBe("erin@uni.test"); // identidade = e-mail principal
+    expect(r.all).toHaveLength(2);
+  });
+  test("e-mail extra não rouba o e-mail principal de outra pessoa", () => {
+    const r = parseSheet(
+      [
+        ["nome", "email", "usuario", "equipe"],
+        ["Gabi", "gabi@uni.test", "hana@uni.test", "1"],
+        ["Hana", "hana@uni.test", "hana01", "2"],
+      ],
+      { maxTeamSize: 5 },
+    );
+    expect(r.byEmail.get("hana@uni.test")?.nome).toBe("Hana");
+  });
+});
