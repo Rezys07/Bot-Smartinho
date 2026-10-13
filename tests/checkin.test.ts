@@ -27,6 +27,10 @@ class FakeGateway implements TeamGateway {
     this.access.push([team.number, id]);
   }
   async revokeAccess() {}
+  topics: number[] = [];
+  async refreshTopic(team: TeamRow) {
+    this.topics.push(team.number);
+  }
 }
 
 async function setup(values: unknown[][] = buildFixture(), opts: { sheetTeamsOpen?: boolean; max?: number } = {}) {
@@ -220,5 +224,32 @@ describe("criação antecipada das equipes da planilha", () => {
     const again = await service.ensureDeclaredTeams();
     expect(again.created).toEqual([]);
     expect(gateway.created).toEqual([1, 2, 3]);
+  });
+});
+
+describe("planilha nova com as mesmas chaves de equipe", () => {
+  test("reaproveita os canais e atualiza o nome da equipe", async () => {
+    const { service, gateway, repo, store } = await setup([
+      ["Nome", "E-mail", "Equipe"],
+      ["Ana", "a@x.test", "TEAM 01"],
+      ["Bia", "b@x.test", "TEAM 02"],
+    ]);
+    await service.ensureDeclaredTeams();
+    // A organização troca a planilha: agora as equipes são "1", "2" e "3".
+    (store as any).source = {
+      fetchValues: async () => [
+        ["Nome", "E-mail", "Equipe"],
+        ["Caio", "c@x.test", "1"],
+        ["Duda", "d@x.test", "2"],
+        ["Elis", "e@x.test", "3"],
+      ],
+    };
+    await store.refresh();
+    const r = await service.ensureDeclaredTeams();
+    expect(r.created.map((t) => t.number)).toEqual([3]);
+    expect(r.relabeled.map((t) => [t.number, t.sheet_label])).toEqual([[1, "1"], [2, "2"]]);
+    expect(gateway.created).toEqual([1, 2, 3]); // canais 1 e 2 não foram recriados
+    expect(gateway.topics).toEqual([1, 2]);
+    expect(repo.team(1)?.sheet_label).toBe("1");
   });
 });

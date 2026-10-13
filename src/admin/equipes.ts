@@ -12,6 +12,11 @@ export async function createDeclaredTeams(ctx: BotContext): Promise<{ created: n
         .join(", ")}`,
     );
   }
+  if (r.relabeled.length) {
+    await ctx.audit(
+      `✏️ Nome na planilha atualizado: ${r.relabeled.map((t) => `**${ctx.t.teamName(t.number)}** → ${t.sheet_label}`).join(", ")}`,
+    );
+  }
   if (r.errors.length) await ctx.audit(`❗ Falha ao criar canais de equipe: ${r.errors.join("; ")}`);
   logger.info({ criadas: r.created.length, erros: r.errors.length }, "equipes da planilha conferidas");
   return { created: r.created.length, errors: r.errors.length };

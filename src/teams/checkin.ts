@@ -15,6 +15,8 @@ export interface TeamGateway {
   grantAccess(team: TeamRow, discordId: string): Promise<void>;
   /** Remove o acesso do membro aos canais da equipe. */
   revokeAccess(team: TeamRow, discordId: string): Promise<void>;
+  /** Atualiza o tópico do canal de texto (nome da equipe, desafio). */
+  refreshTopic(team: TeamRow): Promise<void>;
 }
 
 export type CheckinResult =
@@ -99,10 +101,11 @@ export class CheckinService {
    * na ordem em que aparecem. Idempotente; roda sob o mesmo mutex do check-in.
    * Ninguém ganha acesso aqui — cada pessoa entra no canal da sua equipe ao fazer check-in.
    */
-  async ensureDeclaredTeams(): Promise<{ created: TeamRow[]; errors: string[] }> {
+  async ensureDeclaredTeams(): Promise<{ created: TeamRow[]; relabeled: TeamRow[]; errors: string[] }> {
     return this.d.mutex.run(async () => {
       const { repo, store, gateway, sheetTeamsOpen } = this.d;
       const created: TeamRow[] = [];
+      const relabeled: TeamRow[] = [];
       const errors: string[] = [];
       const declared = [...(store.snapshot?.sheet.teams.values() ?? [])].sort(
         (a, b) => a.members[0]!.row - b.members[0]!.row,
@@ -112,6 +115,12 @@ export class CheckinService {
         if (!team) {
           team = repo.createTeam({ sheetKey: d.key, sheetLabel: d.label, open: sheetTeamsOpen });
           created.push(team);
+        } else if (team.sheet_label !== d.label) {
+          // Mesma equipe, nome diferente na planilha (ex.: "TEAM 01" → "1"): atualiza o banco e o tópico.
+          repo.setTeamLabel(team.number, d.label);
+          team = repo.team(team.number)!;
+          relabeled.push(team);
+          await gateway.refreshTopic(team).catch((err) => errors.push(`${d.label}: tópico — ${err instanceof Error ? err.message : String(err)}`));
         }
         if (team.text_channel_id && team.voice_channel_id) continue;
         try {
@@ -120,7 +129,7 @@ export class CheckinService {
           errors.push(`${d.label}: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
-      return { created, errors };
+      return { created, relabeled, errors };
     });
   }
 

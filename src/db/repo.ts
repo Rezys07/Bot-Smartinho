@@ -104,6 +104,10 @@ export class Repo {
       .all();
   }
 
+  setTeamLabel(number: number, label: string) {
+    this.db.query("UPDATE teams SET sheet_label = ? WHERE number = ?").run(label, number);
+  }
+
   setTeamChannels(number: number, textId: string | null, voiceId: string | null) {
     this.db.query("UPDATE teams SET text_channel_id = ?, voice_channel_id = ? WHERE number = ?").run(textId, voiceId, number);
   }
