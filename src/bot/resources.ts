@@ -21,6 +21,8 @@ export interface Resources {
     botLogs: TextChannel | null;
     /** Só Mentor e Organização veem; recebe as boas-vindas da staff. */
     salaMentores: TextChannel | null;
+    /** Canal de conversa geral, indicado a quem tenta escrever no #check-in. */
+    chat: TextChannel | null;
   };
 }
 
@@ -62,6 +64,10 @@ export async function resolveResources(guild: Guild, env: BotEnv, names: Resourc
       filaMentoria: findTextChannel(guild, env.CHANNEL_FILA_MENTORIA_ID, names.filaMentoria),
       botLogs: findTextChannel(guild, env.CHANNEL_BOT_LOGS_ID, names.botLogs),
       salaMentores: findTextChannel(guild, undefined, names.salaMentores),
+      chat:
+        findTextChannel(guild, env.CHANNEL_CHAT_ID, "chat") ??
+        findTextChannel(guild, undefined, "bate-papo") ??
+        findTextChannel(guild, undefined, "geral"),
     },
   };
 }

@@ -92,7 +92,7 @@ describe("temas", () => {
   test("config/mentoria.json é válido e ganha 'Outro assunto'", () => {
     const topics = parseTopics(JSON.parse(readFileSync("config/mentoria.json", "utf8")));
     expect(topics.at(-1)).toEqual(OTHER_TOPIC);
-    expect(topics.find((t) => t.id === "pitch")?.mentores).toEqual(["Bruno Teixeira"]);
+    expect(topics.find((t) => t.id === "pitch")?.mentores).toEqual([]);
   });
   test("rejeita id repetido ou reservado", () => {
     expect(() => parseTopics({ temas: [{ id: "a", nome: "A" }, { id: "a", nome: "B" }] })).toThrow();

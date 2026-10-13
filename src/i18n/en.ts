@@ -51,7 +51,8 @@ export const en: Messages = {
     modalTitle: "Hackathon check-in",
     emailLabel: "Email used to register",
     emailHint: "Only the bot sees this email. It is not shown in the channel.",
-    onlyCommandHere: "in this channel, please use the **Check in** button on the pinned message (or `!join your-email@example.com`).",
+    onlyCommandHere: (chatId) =>
+      `check-in is done only with the **Check in** button on the pinned message. ${chatId ? `To chat, please use <#${chatId}>.` : "To chat, please use the chat channel."}`,
     useChannel: (channelId) => `please check in at <#${channelId}>.`,
     usage: "click the **✅ Check in** button on the pinned message, or use `!join your-email@example.com`.",
     invalidEmail: (left) => `That doesn't look like an email. Please check and try again. Attempts left: ${left}.`,

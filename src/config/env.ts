@@ -61,6 +61,7 @@ const botSchema = z.object({
   CHANNEL_CHECKIN_ID: optionalId,
   CHANNEL_FILA_MENTORIA_ID: optionalId,
   CHANNEL_BOT_LOGS_ID: optionalId,
+  CHANNEL_CHAT_ID: optionalId,
   TEAM_MAX_SIZE: intWithDefault(5, 2),
   TEAMS_PER_CATEGORY: z.coerce.number().int().min(1).max(25).default(25),
   /** Cria os canais de todas as equipes da planilha já na inicialização (e a cada releitura). */

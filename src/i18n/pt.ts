@@ -55,7 +55,8 @@ export const pt = {
     modalTitle: "Check-in do Hackathon",
     emailLabel: "E-mail usado na inscrição",
     emailHint: "Só o bot vê este e-mail. Ele não aparece no canal.",
-    onlyCommandHere: "neste canal use o botão **Fazer check-in** da mensagem fixada (ou `!entrar seu-email@exemplo.com`).",
+    onlyCommandHere: (chatId: string | null) =>
+      `o check-in é só pelo botão **Fazer check-in** da mensagem fixada. ${chatId ? `Para conversar, use <#${chatId}>.` : "Para conversar, use o canal de bate-papo."}`,
     useChannel: (channelId: string) => `faça o check-in no canal <#${channelId}>.`,
     usage: "clique no botão **✅ Fazer check-in** da mensagem fixada, ou use `!entrar seu-email@exemplo.com`.",
     invalidEmail: (left: number) => `Isso não parece um e-mail. Confira e tente de novo. Tentativas restantes: ${left}.`,

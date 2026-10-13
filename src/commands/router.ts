@@ -54,23 +54,25 @@ export async function handleMessage(ctx: BotContext, msg: Message): Promise<void
     }
     return;
   }
-  if (msg.author.bot) return;
-
   const parsed = parseCommand(msg.content);
-  const inCheckin = msg.channelId === ctx.channels.checkin.id;
-  const staff = isOrganizacao(ctx, msg.member) || isMentor(ctx, msg.member);
 
-  // #check-in fica limpo: qualquer mensagem de participante que não seja comando é apagada
-  // (pode conter e-mail colado sem o !entrar).
-  const allowedInCheckin = parsed && (commands.get(parsed.name) === entrarCmd || CHECKIN_ALLOWED.has(parsed.name));
-  if (inCheckin && !staff && !allowedInCheckin) {
-    await msg.delete().catch(() => undefined);
-    await sendTemp(msg.channel, `<@${msg.author.id}> ${ctx.t.checkin.onlyCommandHere}`, {
-      mention: msg.author.id,
-      seconds: 15,
-    });
-    return;
+  // #check-in: só ficam as mensagens do próprio bot. Qualquer outra (participante, staff ou outro bot)
+  // é apagada. O check-in é feito pelo botão; !entrar e !help ainda funcionam para quem conseguir escrever.
+  if (msg.channelId === ctx.channels.checkin.id && msg.author.id !== ctx.client.user.id) {
+    const cmd = parsed ? commands.get(parsed.name) : undefined;
+    const usable = !msg.author.bot && parsed && (cmd === entrarCmd || CHECKIN_ALLOWED.has(parsed.name));
+    if (!usable) {
+      await msg.delete().catch(() => undefined);
+      if (!msg.author.bot) {
+        await sendTemp(msg.channel, `<@${msg.author.id}> ${ctx.t.checkin.onlyCommandHere(ctx.channels.chat?.id ?? null)}`, {
+          mention: msg.author.id,
+          seconds: 15,
+        });
+      }
+      return;
+    }
   }
+  if (msg.author.bot) return;
   if (!parsed) return;
 
   const cmd = commands.get(parsed.name);

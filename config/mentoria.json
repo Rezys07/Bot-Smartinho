@@ -19,8 +19,7 @@
     {
       "id": "pitch",
       "nome": "Pitch",
-      "descricao": "Apresentação, roteiro e tempo",
-      "mentores": ["Bruno Teixeira"]
+      "descricao": "Apresentação, roteiro e tempo"
     }
   ]
 }
