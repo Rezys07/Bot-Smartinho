@@ -30,3 +30,11 @@ describe("!help", () => {
     expect(text).not.toContain("!desafio");
   });
 });
+
+describe("!mover no !help", () => {
+  test("mentor e organização veem; participante não", () => {
+    expect(helpText(fakeCtx(pt), { mentor: false, organizacao: false })).not.toContain("!mover");
+    expect(helpText(fakeCtx(pt), { mentor: true, organizacao: false })).toContain("!mover");
+    expect(helpText(fakeCtx(en), { mentor: false, organizacao: true })).toContain("!move");
+  });
+});

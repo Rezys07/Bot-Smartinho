@@ -22,6 +22,7 @@ export const en: Messages = {
 
   somethingWrong: "Something went wrong. The organizers have been notified.",
   staffOnly: "this command is for organizers only.",
+  mentorsAndStaffOnly: "this command is for mentors and organizers only.",
 
   help: {
     title: "📋 Bot commands",
@@ -37,11 +38,11 @@ export const en: Messages = {
       [
         "**Mentoring** (Mentor role)",
         `Requests arrive in ${filaId ? `<#${filaId}>` : "#mentoring-queue"}: click **Take it** and, when done, **Finish mentoring**.`,
+        "`!move @person team-004` — moves someone who already checked in to another team",
       ].join("\n"),
     admin: [
       "**Organizers**",
       "`!create-teams` — re-reads the sheet and creates any missing team channels",
-      "`!move @person team-004` — moves someone who already checked in to another team",
       "Unanswered mentoring requests and everything the bot does show up in #bot-logs.",
     ].join("\n"),
     other: "`!help` — shows this list",

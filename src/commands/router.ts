@@ -9,6 +9,8 @@ export const PREFIX = "!";
 export interface Command {
   /** Só cargo Organização (ou administradores). */
   staffOnly?: boolean;
+  /** Com staffOnly: libera também para o cargo Mentor. */
+  allowMentors?: boolean;
   run(ctx: BotContext, msg: Message<true>, args: string[], rest: string): Promise<void>;
 }
 
@@ -77,8 +79,11 @@ export async function handleMessage(ctx: BotContext, msg: Message): Promise<void
 
   const cmd = commands.get(parsed.name);
   if (!cmd) return;
-  if (cmd.staffOnly && !isOrganizacao(ctx, msg.member)) {
-    await sendTemp(msg.channel, `<@${msg.author.id}> ${ctx.t.staffOnly}`, { mention: msg.author.id });
+  const allowed = isOrganizacao(ctx, msg.member) || (cmd.allowMentors && isMentor(ctx, msg.member));
+  if (cmd.staffOnly && !allowed) {
+    await sendTemp(msg.channel, `<@${msg.author.id}> ${cmd.allowMentors ? ctx.t.mentorsAndStaffOnly : ctx.t.staffOnly}`, {
+      mention: msg.author.id,
+    });
     return;
   }
 

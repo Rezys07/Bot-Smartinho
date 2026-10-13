@@ -23,6 +23,7 @@ export const pt = {
   // Genéricos
   somethingWrong: "Algo deu errado. A organização foi avisada.",
   staffOnly: "este comando é só para a organização.",
+  mentorsAndStaffOnly: "este comando é só para mentores e organização.",
 
   // !help
   help: {
@@ -40,11 +41,11 @@ export const pt = {
       [
         "**Mentoria** (cargo Mentor)",
         `Os pedidos chegam em ${filaId ? `<#${filaId}>` : "#fila-mentoria"}: clique em **Atender** e, ao terminar, em **Finalizar mentoria**.`,
+        "`!mover @pessoa equipe-004` — troca a equipe de quem já fez check-in",
       ].join("\n"),
     admin: [
       "**Organização**",
       "`!criar-equipes` — relê a planilha e cria os canais das equipes que faltam",
-      "`!mover @pessoa equipe-004` — troca a equipe de quem já fez check-in",
       "Pedidos de mentoria sem atendimento e tudo o que o bot faz aparecem no #bot-logs.",
     ].join("\n"),
     other: "`!help` / `!ajuda` — mostra esta lista",

@@ -16,7 +16,7 @@ async function findMember(ctx: BotContext, msg: Message<true>, ref: string): Pro
 }
 
 /**
- * `!mover @pessoa equipe-004` (ou `!move @person team-004`) — só organização.
+ * `!mover @pessoa equipe-004` (ou `!move @person team-004`) — mentores e organização.
  * Troca a equipe de quem já fez check-in: banco, acesso aos canais (sai da antiga, entra na nova) e apelido.
  * Para quem ainda não fez check-in, basta mudar a coluna Equipe na planilha.
  */
@@ -73,4 +73,4 @@ async function mover(ctx: BotContext, msg: Message<true>, args: string[]) {
   );
 }
 
-registerCommand(["mover", "move"], { staffOnly: true, run: (ctx, msg, args) => mover(ctx, msg, args) });
+registerCommand(["mover", "move"], { staffOnly: true, allowMentors: true, run: (ctx, msg, args) => mover(ctx, msg, args) });
