@@ -96,6 +96,11 @@ const botSchema = z.object({
   /** Pasta com desafios.json, mentoria.json e mensagem-checkin.md deste servidor. */
   CONFIG_DIR: z.string().trim().min(1).default("config"),
   /** Usuários do Discord (da planilha de staff) que recebem Organização; os demais recebem Mentor. */
+  /** Usuários do Discord que recebem Mentor mesmo sem estar na planilha de staff. */
+  MENTOR_USUARIOS: z
+    .string()
+    .optional()
+    .transform((v) => (v ?? "").split(/[,;\s]+/).map((u) => u.trim()).filter(Boolean)),
   ORGANIZACAO_USUARIOS: z
     .string()
     .optional()

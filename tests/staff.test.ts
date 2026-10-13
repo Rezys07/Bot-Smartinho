@@ -60,3 +60,16 @@ describe("nome de exibição não vira usuário", () => {
     expect(normalizeUsername("@ Fulano ")).toBe("fulano");
   });
 });
+
+describe("MENTOR_USUARIOS", () => {
+  test("mentores extras entram mesmo fora da planilha e do filtro", () => {
+    const r = parseStaffSheet(SHEET, { organizacao: [], hackathons: ["Cidades inteligentes"], mentoresExtras: ["@Nova_Mentora", "biamulheres", "nome invalido"] });
+    expect(r.byUsername.get("nova_mentora")).toMatchObject({ role: "mentor", row: 0 });
+    expect(r.byUsername.get("biamulheres")?.role).toBe("mentor"); // filtrada da planilha, mas está na lista extra
+    expect(r.issues.some((i) => i.message.includes("nome invalido"))).toBe(true);
+  });
+  test("quem já está na planilha mantém o papel de lá", () => {
+    const r = parseStaffSheet(SHEET, { organizacao: ["anaorg01"], hackathons: [], mentoresExtras: ["anaorg01"] });
+    expect(r.byUsername.get("anaorg01")?.role).toBe("organizacao");
+  });
+});

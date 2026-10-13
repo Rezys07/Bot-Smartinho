@@ -42,6 +42,7 @@ export class StaffSync {
       const values = await this.source.fetchValues();
       const parsed = parseStaffSheet(values, {
         organizacao: this.ctx.env.ORGANIZACAO_USUARIOS,
+        mentoresExtras: this.ctx.env.MENTOR_USUARIOS,
         hackathons: this.ctx.env.STAFF_HACKATHONS,
       });
       const firstLoad = this.current === null;
@@ -134,7 +135,7 @@ export class StaffSync {
 
     const firstTime = !this.wasGranted(member.id);
     this.recordGrant(member.id, entry.role);
-    await this.ctx.audit(`🎓 <@${member.id}> recebeu o cargo **${ROLE_LABEL[entry.role]}** (planilha de staff, linha ${entry.row}).`);
+    await this.ctx.audit(`🎓 <@${member.id}> recebeu o cargo **${ROLE_LABEL[entry.role]}** (${entry.row ? `planilha de staff, linha ${entry.row}` : "lista MENTOR_USUARIOS"}).`);
     if (firstTime) await this.welcome(member, entry);
     return true;
   }

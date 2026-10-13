@@ -48,7 +48,7 @@ export function hackathonMatches(value: string, filter: string[]): boolean {
 /** Lê a planilha de staff (colunas: Nome, usuário, Qual hackathon — em qualquer ordem). */
 export function parseStaffSheet(
   values: unknown[][],
-  opts: { organizacao: string[]; hackathons: string[] },
+  opts: { organizacao: string[]; hackathons: string[]; mentoresExtras?: string[] },
 ): ParsedStaff {
   const byUsername = new Map<string, StaffEntry>();
   const issues: StaffIssue[] = [];
@@ -81,6 +81,16 @@ export function parseStaffSheet(
       hackathon,
       role: orgSet.has(usuario) ? "organizacao" : "mentor",
     });
+  }
+  // Mentores extras (MENTOR_USUARIOS): valem mesmo sem estar na planilha. row = 0 indica "veio da configuração".
+  for (const raw of opts.mentoresExtras ?? []) {
+    const usuario = normalizeUsername(raw);
+    if (!isValidUsername(usuario)) {
+      issues.push({ message: `MENTOR_USUARIOS: "${raw}" não parece um usuário do Discord.` });
+      continue;
+    }
+    if (byUsername.has(usuario)) continue; // já está na planilha: vale o papel de lá
+    byUsername.set(usuario, { row: 0, nome: "", usuario, hackathon: "", role: orgSet.has(usuario) ? "organizacao" : "mentor" });
   }
   for (const u of orgSet) {
     if (!byUsername.has(u)) issues.push({ message: `ORGANIZACAO_USUARIOS: "${u}" não está na planilha de staff (ou foi filtrado).` });
