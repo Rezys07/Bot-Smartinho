@@ -41,6 +41,7 @@ export const en: Messages = {
     admin: [
       "**Organizers**",
       "`!create-teams` — re-reads the sheet and creates any missing team channels",
+      "`!move @person team-004` — moves someone who already checked in to another team",
       "Unanswered mentoring requests and everything the bot does show up in #bot-logs.",
     ].join("\n"),
     other: "`!help` — shows this list",

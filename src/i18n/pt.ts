@@ -44,6 +44,7 @@ export const pt = {
     admin: [
       "**Organização**",
       "`!criar-equipes` — relê a planilha e cria os canais das equipes que faltam",
+      "`!mover @pessoa equipe-004` — troca a equipe de quem já fez check-in",
       "Pedidos de mentoria sem atendimento e tudo o que o bot faz aparecem no #bot-logs.",
     ].join("\n"),
     other: "`!help` / `!ajuda` — mostra esta lista",

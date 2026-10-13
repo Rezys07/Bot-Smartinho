@@ -11,6 +11,7 @@ import "./commands/desafio";
 import "./commands/checkinButton";
 import "./commands/help";
 import { createDeclaredTeams } from "./admin/equipes";
+import "./admin/mover";
 import { handleInteraction } from "./commands/interactions";
 import { startMentoringAlerts, topicMentorIds } from "./mentoring/discord";
 import { MentoringRequests } from "./mentoring/requests";
