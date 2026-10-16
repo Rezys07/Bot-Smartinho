@@ -1,21 +1,86 @@
-# Dados pessoais e segredos (LGPD) — nunca versionar
-data/
+# ─────────────────────────────────────────────────────────────
+# Segredos — NUNCA versionar (token do Discord, chave do Google)
+# ─────────────────────────────────────────────────────────────
 .env
 .env.*
 !.env.example
-*.xlsx
-*.csv
+*.pem
+*.key
+*.p12
+*.pfx
+# Chaves JSON de Service Account do Google e afins
 *service-account*.json
+*serviceaccount*.json
 *-credentials.json
+credentials*.json
+client_secret*.json
+secrets/
+keys/
 
-# Estado do bot
+# ─────────────────────────────────────────────────────────────
+# Dados pessoais (LGPD) — planilhas, exportações e documentos
+# de inscrição/participantes nunca vão para o repositório
+# ─────────────────────────────────────────────────────────────
+*.xlsx
+*.xls
+*.xlsm
+*.ods
+*.csv
+*.tsv
+*.pdf
+*.docx
+*.doc
+
+# ─────────────────────────────────────────────────────────────
+# Estado do bot (bancos SQLite com check-ins e equipes)
+# ─────────────────────────────────────────────────────────────
+data/
 *.sqlite
+*.sqlite3
 *.sqlite-*
 *.db
+*.db-*
+backups/
+*.bak
 
-# Build / deps
+# Pacotes para deploy podem conter o .env e o banco
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+
+# ─────────────────────────────────────────────────────────────
+# Dependências, build e cache
+# ─────────────────────────────────────────────────────────────
 node_modules/
 dist/
+build/
+out/
 coverage/
+.cache/
+*.tsbuildinfo
+
+# Logs
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Scripts temporários de diagnóstico
+.tmp-*
+*.tmp
+
+# Configurações locais de editor e ferramentas
+.vscode/
+.idea/
+.claude/
+*.swp
+*~
+
+# Sistema operacional
 .DS_Store
+Thumbs.db
+desktop.ini
