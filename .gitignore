@@ -14,6 +14,8 @@
 *-credentials.json
 credentials*.json
 client_secret*.json
+# Nome padrão do arquivo de chave baixado do Google Cloud: <projeto>-<12 dígitos hex>.json
+*-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].json
 secrets/
 keys/
 
