@@ -1,4 +1,8 @@
-# Smartinho Bot
+<p align="center">
+  <img src="assets/smartinho.jpg" alt="Smartinho, o mascote do bot: um lagarto verde e laranja numa floresta" width="280">
+</p>
+
+<h1 align="center">Smartinho Bot</h1>
 
 Bot de Discord para organizar hackathons. Ele cuida do **check-in** pela planilha de inscrições, cria **canais privados para cada equipe**, registra a **escolha de desafio**, mantém uma **fila de mentoria** e dá cargos de **mentor e organização** automaticamente.
 
