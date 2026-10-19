@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, type Client, type Guild, type GuildMember } from "discord.js";
+  import { PermissionFlagsBits, type Client, type Guild, type GuildMember } from "discord.js";
 import type { BotEnv } from "../config/env";
 import type { Repo } from "../db/repo";
 import type { Messages } from "../i18n";
